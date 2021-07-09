@@ -95,13 +95,13 @@ func (v Cluster) Table() string {
 	buff := new(bytes.Buffer)
 
 	t := tablewriter.NewWriter(buff)
-	t.SetHeader(ClusterColumns[0:6])
-	t.Append(value[0:6])
+	t.SetHeader(ClusterColumns[0:7])
+	t.Append(value[0:7])
 	t.Render()
 
 	t2 := tablewriter.NewWriter(buff)
-	t2.SetHeader(ClusterColumns[6:])
-	t2.Append(value[6:])
+	t2.SetHeader(ClusterColumns[7:])
+	t2.Append(value[7:])
 	t2.Render()
 
 	return buff.String()

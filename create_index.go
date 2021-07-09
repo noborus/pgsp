@@ -110,13 +110,13 @@ func (v CreateIndex) Table() string {
 	buff := new(bytes.Buffer)
 
 	t := tablewriter.NewWriter(buff)
-	t.SetHeader(CreateIndexColumns[0:6])
-	t.Append(value[0:6])
+	t.SetHeader(CreateIndexColumns[0:7])
+	t.Append(value[0:7])
 	t.Render()
 
 	t2 := tablewriter.NewWriter(buff)
-	t2.SetHeader(CreateIndexColumns[6:])
-	t2.Append(value[6:])
+	t2.SetHeader(CreateIndexColumns[7:])
+	t2.Append(value[7:])
 	t2.Render()
 
 	return buff.String()

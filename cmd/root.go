@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	_ "github.com/lib/pq"
 
@@ -15,13 +16,16 @@ import (
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
+var (
+	cfgFile         string
+	afterCompletion int
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "pgsp",
 	Short: "pg_stat_progress monitor",
-	Long: `Monitors and displays PostgreSQL's pg_stat_progress_ *.
+	Long: `Monitors PostgreSQL's pg_stat_progress_*.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
 		db, err := pgsp.Connect()
@@ -29,16 +33,18 @@ var rootCmd = &cobra.Command{
 			log.Println(err)
 			return
 		}
+		defer db.Close()
+
 		model := tui.Model{
 			DB: db,
 		}
+		tui.AfterCompletion = time.Duration(afterCompletion)
 
 		p := tea.NewProgram(model)
 		if err := p.Start(); err != nil {
 			fmt.Printf("there's been an error: %v", err)
 			return
 		}
-		db.Close()
 	},
 }
 
@@ -60,6 +66,8 @@ func init() {
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+
+	rootCmd.PersistentFlags().IntVarP(&afterCompletion, "AfterCompletion", "a", 10, "Number of seconds to display after completion")
 }
 
 // initConfig reads in config file and ENV variables if set.

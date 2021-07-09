@@ -87,11 +87,18 @@ func (v Vacuum) String() []string {
 }
 
 func (v Vacuum) Table() string {
+	value := v.String()
+
 	buff := new(bytes.Buffer)
 	t := tablewriter.NewWriter(buff)
-	t.SetHeader(VacuumColumns)
-	t.Append(v.String())
+	t.SetHeader(VacuumColumns[0:7])
+	t.Append(value[0:7])
 	t.Render()
+
+	t2 := tablewriter.NewWriter(buff)
+	t2.SetHeader(VacuumColumns[7:])
+	t2.Append(value[7:])
+	t2.Render()
 	return buff.String()
 }
 
