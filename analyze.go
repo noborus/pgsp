@@ -3,7 +3,7 @@ package pgsp
 import (
 	"bytes"
 	"database/sql"
-	"fmt"
+	"strconv"
 
 	_ "github.com/lib/pq"
 	"github.com/olekukonko/tablewriter"
@@ -51,7 +51,20 @@ func GetAnalyze(db *sql.DB) ([]Analyze, error) {
 	var as []Analyze
 	for rows.Next() {
 		var row Analyze
-		err = rows.Scan(&row.PID, &row.DATID, &row.DATNAME, &row.RELID, &row.PHASE, &row.SampleBLKSTotal, &row.SampleBLKSScanned, &row.ExtStatsTotal, &row.ExtStatsComputed, &row.ChildTablesTotal, &row.ChildTablesDone, &row.CurrentChildTableRelid)
+		err = rows.Scan(
+			&row.PID,
+			&row.DATID,
+			&row.DATNAME,
+			&row.RELID,
+			&row.PHASE,
+			&row.SampleBLKSTotal,
+			&row.SampleBLKSScanned,
+			&row.ExtStatsTotal,
+			&row.ExtStatsComputed,
+			&row.ChildTablesTotal,
+			&row.ChildTablesDone,
+			&row.CurrentChildTableRelid,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -61,25 +74,36 @@ func GetAnalyze(db *sql.DB) ([]Analyze, error) {
 }
 
 func (v Analyze) String() []string {
-	pid := fmt.Sprintf("%v", v.PID)
-	datid := fmt.Sprintf("%v", v.DATID)
-	relid := fmt.Sprintf("%v", v.RELID)
-	total := fmt.Sprintf("%v", v.SampleBLKSTotal)
-	scanned := fmt.Sprintf("%v", v.SampleBLKSScanned)
-	extTotal := fmt.Sprintf("%v", v.ExtStatsTotal)
-	extComputed := fmt.Sprintf("%v", v.ExtStatsComputed)
-	childTotal := fmt.Sprintf("%v", v.ChildTablesTotal)
-	childDone := fmt.Sprintf("%v", v.ChildTablesDone)
-	childRelid := fmt.Sprintf("%v", v.CurrentChildTableRelid)
-	return []string{pid, datid, v.DATNAME, relid, v.PHASE, total, scanned, extTotal, extComputed, childTotal, childDone, childRelid}
+	return []string{
+		strconv.Itoa(v.PID),
+		strconv.Itoa(v.DATID),
+		v.DATNAME,
+		strconv.Itoa(v.RELID),
+		v.PHASE,
+		strconv.FormatInt(v.SampleBLKSTotal, 10),
+		strconv.FormatInt(v.SampleBLKSScanned, 10),
+		strconv.FormatInt(v.ExtStatsTotal, 10),
+		strconv.FormatInt(v.ExtStatsComputed, 10),
+		strconv.FormatInt(v.ChildTablesTotal, 10),
+		strconv.FormatInt(v.ChildTablesDone, 10),
+		strconv.Itoa(v.CurrentChildTableRelid),
+	}
 }
 
 func (v Analyze) Table() string {
+	value := v.String()
 	buff := new(bytes.Buffer)
+
 	t := tablewriter.NewWriter(buff)
-	t.SetHeader(VacuumColumns)
-	t.Append(v.String())
+	t.SetHeader(AnalyzeColumns[0:6])
+	t.Append(value[0:6])
 	t.Render()
+
+	t2 := tablewriter.NewWriter(buff)
+	t2.SetHeader(AnalyzeColumns[6:])
+	t2.Append(value[6:])
+	t2.Render()
+
 	return buff.String()
 }
 
@@ -89,4 +113,8 @@ func (v Analyze) Name() string {
 
 func (v Analyze) Progress() float64 {
 	return float64(v.SampleBLKSScanned) / float64(v.SampleBLKSTotal)
+}
+
+func (v Analyze) Pid() int {
+	return v.PID
 }

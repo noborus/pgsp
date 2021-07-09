@@ -9,6 +9,7 @@ import (
 )
 
 type PGSProgress interface {
+	Pid() int
 	Name() string
 	Table() string
 	Progress() float64

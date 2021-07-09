@@ -3,7 +3,7 @@ package pgsp
 import (
 	"bytes"
 	"database/sql"
-	"fmt"
+	"strconv"
 
 	_ "github.com/lib/pq"
 	"github.com/olekukonko/tablewriter"
@@ -49,7 +49,19 @@ func GetVacuum(db *sql.DB) ([]Vacuum, error) {
 	var as []Vacuum
 	for rows.Next() {
 		var row Vacuum
-		err = rows.Scan(&row.PID, &row.DATID, &row.DATNAME, &row.RELID, &row.PHASE, &row.HeapBLKSTotal, &row.HeapBLKSScanned, &row.HeapBLKSVacuumed, &row.IndexVacuumCount, &row.MaxDeadTuples, &row.NumDeadTuples)
+		err = rows.Scan(
+			&row.PID,
+			&row.DATID,
+			&row.DATNAME,
+			&row.RELID,
+			&row.PHASE,
+			&row.HeapBLKSTotal,
+			&row.HeapBLKSScanned,
+			&row.HeapBLKSVacuumed,
+			&row.IndexVacuumCount,
+			&row.MaxDeadTuples,
+			&row.NumDeadTuples,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -59,14 +71,19 @@ func GetVacuum(db *sql.DB) ([]Vacuum, error) {
 }
 
 func (v Vacuum) String() []string {
-	pid := fmt.Sprintf("%v", v.PID)
-	datid := fmt.Sprintf("%v", v.DATID)
-	total := fmt.Sprintf("%v", v.HeapBLKSTotal)
-	scanned := fmt.Sprintf("%v", v.HeapBLKSScanned)
-	count := fmt.Sprintf("%v", v.IndexVacuumCount)
-	max := fmt.Sprintf("%v", v.MaxDeadTuples)
-	num := fmt.Sprintf("%v", v.NumDeadTuples)
-	return []string{pid, datid, v.DATNAME, v.PHASE, total, scanned, count, max, num}
+	return []string{
+		strconv.Itoa(v.PID),
+		strconv.Itoa(v.DATID),
+		v.DATNAME,
+		strconv.Itoa(v.RELID),
+		v.PHASE,
+		strconv.FormatInt(v.HeapBLKSTotal, 10),
+		strconv.FormatInt(v.HeapBLKSScanned, 10),
+		strconv.FormatInt(v.HeapBLKSVacuumed, 10),
+		strconv.FormatInt(v.IndexVacuumCount, 10),
+		strconv.FormatInt(v.MaxDeadTuples, 10),
+		strconv.FormatInt(v.NumDeadTuples, 10),
+	}
 }
 
 func (v Vacuum) Table() string {
@@ -84,4 +101,8 @@ func (v Vacuum) Name() string {
 
 func (v Vacuum) Progress() float64 {
 	return float64(v.HeapBLKSScanned) / float64(v.HeapBLKSTotal)
+}
+
+func (v Vacuum) Pid() int {
+	return v.PID
 }

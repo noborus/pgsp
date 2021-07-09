@@ -3,7 +3,7 @@ package pgsp
 import (
 	"bytes"
 	"database/sql"
-	"fmt"
+	"strconv"
 
 	_ "github.com/lib/pq"
 	"github.com/olekukonko/tablewriter"
@@ -54,12 +54,14 @@ func GetBaseBackup(db *sql.DB) ([]BaseBackup, error) {
 }
 
 func (v BaseBackup) String() []string {
-	pid := fmt.Sprintf("%v", v.PID)
-	backupTotal := fmt.Sprintf("%v", v.BackupTotal)
-	backupStreamed := fmt.Sprintf("%v", v.BackupStreamed)
-	tablespacesTotal := fmt.Sprintf("%v", v.TablespacesTotal)
-	tablespacesStreamed := fmt.Sprintf("%v", v.TablespacesStreamed)
-	return []string{pid, v.PHASE, backupTotal, backupStreamed, tablespacesTotal, tablespacesStreamed}
+	return []string{
+		strconv.Itoa(v.PID),
+		v.PHASE,
+		strconv.FormatInt(v.BackupTotal, 10),
+		strconv.FormatInt(v.BackupStreamed, 10),
+		strconv.FormatInt(v.TablespacesTotal, 10),
+		strconv.FormatInt(v.TablespacesStreamed, 10),
+	}
 }
 
 func (v BaseBackup) Table() string {
@@ -80,4 +82,8 @@ func (v BaseBackup) Progress() float64 {
 		return float64(v.BackupStreamed) / float64(v.BackupTotal)
 	}
 	return float64(v.TablespacesStreamed) / float64(v.TablespacesTotal)
+}
+
+func (v BaseBackup) Pid() int {
+	return v.PID
 }

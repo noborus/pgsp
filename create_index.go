@@ -3,7 +3,7 @@ package pgsp
 import (
 	"bytes"
 	"database/sql"
-	"fmt"
+	"strconv"
 
 	_ "github.com/lib/pq"
 	"github.com/olekukonko/tablewriter"
@@ -20,7 +20,7 @@ type CreateIndex struct {
 	PHASE           string `db:"phase"`
 	LockersTotal    int64  `db:"lockers_total"`
 	LockersDone     int64  `db:"lockers_done"`
-	LockersPid      int64  `db:"current_locker_pid"`
+	LockersPid      int    `db:"current_locker_pid"`
 	BlocksTotal     int64  `db:"blocks_total"`
 	BlocksDone      int64  `db:"blocks_done"`
 	TuplesTotal     int64  `db:"tuples_total"`
@@ -85,28 +85,40 @@ func GetCreateIndex(db *sql.DB) ([]CreateIndex, error) {
 }
 
 func (v CreateIndex) String() []string {
-	pid := fmt.Sprintf("%v", v.PID)
-	datid := fmt.Sprintf("%v", v.DATID)
-	relid := fmt.Sprintf("%v", v.RELID)
-	indexRelid := fmt.Sprintf("%v", v.IndexRelid)
-	lockerTotal := fmt.Sprintf("%v", v.LockersTotal)
-	lockerDone := fmt.Sprintf("%v", v.LockersDone)
-	lockerPid := fmt.Sprintf("%v", v.LockersPid)
-	blocksTotal := fmt.Sprintf("%v", v.BlocksTotal)
-	blocksDone := fmt.Sprintf("%v", v.BlocksDone)
-	tuplesTotal := fmt.Sprintf("%v", v.TuplesTotal)
-	tuplesDone := fmt.Sprintf("%v", v.TuplesDone)
-	partitionsTotal := fmt.Sprintf("%v", v.PartitionsTotal)
-	partitionsDone := fmt.Sprintf("%v", v.PartitionsDone)
-	return []string{pid, datid, v.DATNAME, relid, indexRelid, v.Command, v.PHASE, lockerTotal, lockerDone, lockerPid, blocksTotal, blocksDone, tuplesTotal, tuplesDone, partitionsTotal, partitionsDone}
+	return []string{
+		strconv.Itoa(v.PID),
+		strconv.Itoa(v.DATID),
+		v.DATNAME,
+		strconv.Itoa(v.RELID),
+		strconv.Itoa(v.IndexRelid),
+		v.Command,
+		v.PHASE,
+		strconv.FormatInt(v.LockersTotal, 10),
+		strconv.FormatInt(v.LockersDone, 10),
+		strconv.Itoa(v.LockersPid),
+		strconv.FormatInt(v.BlocksTotal, 10),
+		strconv.FormatInt(v.BlocksDone, 10),
+		strconv.FormatInt(v.TuplesTotal, 10),
+		strconv.FormatInt(v.TuplesDone, 10),
+		strconv.FormatInt(v.PartitionsTotal, 10),
+		strconv.FormatInt(v.PartitionsDone, 10),
+	}
 }
 
 func (v CreateIndex) Table() string {
+	value := v.String()
 	buff := new(bytes.Buffer)
+
 	t := tablewriter.NewWriter(buff)
-	t.SetHeader(CreateIndexColumns)
-	t.Append(v.String())
+	t.SetHeader(CreateIndexColumns[0:6])
+	t.Append(value[0:6])
 	t.Render()
+
+	t2 := tablewriter.NewWriter(buff)
+	t2.SetHeader(CreateIndexColumns[6:])
+	t2.Append(value[6:])
+	t2.Render()
+
 	return buff.String()
 }
 
@@ -119,4 +131,8 @@ func (v CreateIndex) Progress() float64 {
 		return float64(v.BlocksDone) / float64(v.BlocksTotal)
 	}
 	return float64(v.TuplesDone) / float64(v.TuplesTotal)
+}
+
+func (v CreateIndex) Pid() int {
+	return v.PID
 }
