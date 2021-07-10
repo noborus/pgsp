@@ -35,10 +35,28 @@ type Model struct {
 	DB    *sql.DB
 	count int
 	pgrss []pgrs
+
+	CreateIndex bool
+	Vacuum      bool
+	Analyze     bool
+	Cluster     bool
+	BaseBackup  bool
 }
 
 func (m Model) Init() tea.Cmd {
 	return tickCmd()
+}
+
+func NewModel(db *sql.DB) Model {
+	model := Model{
+		DB:          db,
+		CreateIndex: true,
+		Vacuum:      true,
+		Analyze:     true,
+		Cluster:     true,
+		BaseBackup:  true,
+	}
+	return model
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -69,7 +87,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m *Model) updateProgress(db *sql.DB) error {
+func (m *Model) addCreateIndex() error {
 	cindex, err := pgsp.GetCreateIndex(m.DB)
 	if err != nil {
 		return err
@@ -77,7 +95,10 @@ func (m *Model) updateProgress(db *sql.DB) error {
 	for _, v := range cindex {
 		m.pgrss = addProgress(m.pgrss, v)
 	}
+	return nil
+}
 
+func (m *Model) addVacuum() error {
 	vacuum, err := pgsp.GetVacuum(m.DB)
 	if err != nil {
 		return err
@@ -85,6 +106,10 @@ func (m *Model) updateProgress(db *sql.DB) error {
 	for _, v := range vacuum {
 		m.pgrss = addProgress(m.pgrss, v)
 	}
+	return nil
+}
+
+func (m *Model) addAnalyze() error {
 	analyze, err := pgsp.GetAnalyze(m.DB)
 	if err != nil {
 		return err
@@ -92,7 +117,10 @@ func (m *Model) updateProgress(db *sql.DB) error {
 	for _, v := range analyze {
 		m.pgrss = addProgress(m.pgrss, v)
 	}
+	return nil
+}
 
+func (m *Model) addCluster() error {
 	cluster, err := pgsp.GetCluster(m.DB)
 	if err != nil {
 		return err
@@ -100,13 +128,54 @@ func (m *Model) updateProgress(db *sql.DB) error {
 	for _, v := range cluster {
 		m.pgrss = addProgress(m.pgrss, v)
 	}
+	return nil
+}
 
+func (m *Model) addBaseBackup() error {
 	backup, err := pgsp.GetBaseBackup(m.DB)
 	if err != nil {
 		return err
 	}
 	for _, v := range backup {
 		m.pgrss = addProgress(m.pgrss, v)
+	}
+	return nil
+}
+
+func (m *Model) updateProgress(db *sql.DB) error {
+	if m.CreateIndex {
+		if err := m.addCreateIndex(); err != nil {
+			log.Println(err)
+			m.CreateIndex = false
+		}
+	}
+
+	if m.Vacuum {
+		if err := m.addVacuum(); err != nil {
+			log.Println(err)
+			m.Vacuum = false
+		}
+	}
+
+	if m.Analyze {
+		if err := m.addAnalyze(); err != nil {
+			log.Println(err)
+			m.Analyze = false
+		}
+	}
+
+	if m.Cluster {
+		if err := m.addCluster(); err != nil {
+			log.Println(err)
+			m.Cluster = false
+		}
+	}
+
+	if m.BaseBackup {
+		if err := m.addBaseBackup(); err != nil {
+			log.Println(err)
+			m.BaseBackup = false
+		}
 	}
 
 	pgrss := make([]pgrs, 0, len(m.pgrss))

@@ -15,9 +15,12 @@ type PGSProgress interface {
 	Progress() float64
 }
 
-func Connect() (*sql.DB, error) {
-	db, err := sql.Open("postgres", "host='/var/run/postgresql/'")
+func Connect(dsn string) (*sql.DB, error) {
+	db, err := sql.Open("postgres", dsn)
 	if err != nil {
+		return nil, err
+	}
+	if err := db.Ping(); err != nil {
 		return nil, err
 	}
 	return db, nil
