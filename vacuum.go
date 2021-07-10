@@ -46,6 +46,7 @@ func GetVacuum(db *sql.DB) ([]Vacuum, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	var as []Vacuum
 	for rows.Next() {
 		var row Vacuum

@@ -56,6 +56,7 @@ func GetCreateIndex(db *sql.DB) ([]CreateIndex, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	var as []CreateIndex
 	for rows.Next() {
 		var row CreateIndex

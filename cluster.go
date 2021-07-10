@@ -48,6 +48,7 @@ func GetCluster(db *sql.DB) ([]Cluster, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	var as []Cluster
 	for rows.Next() {
 		var row Cluster

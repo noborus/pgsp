@@ -190,7 +190,7 @@ func (m *Model) updateProgress(db *sql.DB) error {
 
 func addProgress(pgrss []pgrs, v pgsp.PGSProgress) []pgrs {
 	for n, pgr := range pgrss {
-		if pgr.v.Pid() == v.Pid() {
+		if pgr.v.Name() == v.Name() && pgr.v.Pid() == v.Pid() {
 			pgrss[n].v = v
 			pgrss[n].time = time.Now()
 			return pgrss

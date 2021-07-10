@@ -48,6 +48,7 @@ func GetAnalyze(db *sql.DB) ([]Analyze, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	var as []Analyze
 	for rows.Next() {
 		var row Analyze

@@ -34,6 +34,7 @@ func GetBaseBackup(db *sql.DB) ([]BaseBackup, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	var as []BaseBackup
 	for rows.Next() {
 		var row BaseBackup

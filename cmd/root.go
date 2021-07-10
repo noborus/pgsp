@@ -22,14 +22,16 @@ var (
 )
 
 type Config struct {
-	DSN             string `yaml:"dsn"`
-	AfterCompletion int    `yaml:"AfterCompletion"`
+	DSN             string  `yaml:"dsn"`
+	AfterCompletion int     `yaml:"AfterCompletion"`
+	Interval        float64 `yaml:"Interval"`
 }
 
 var (
 	version         bool
 	dsn             string
 	afterCompletion int
+	interval        float64
 )
 
 var (
@@ -52,6 +54,9 @@ var rootCmd = &cobra.Command{
 		}
 
 		setConfig(config)
+		tui.AfterCompletion = time.Duration(afterCompletion)
+		tui.UpdateInterval = time.Duration(time.Second * time.Duration(interval))
+
 		db, err := pgsp.Connect(dsn)
 		if err != nil {
 			log.Println(err)
@@ -60,7 +65,6 @@ var rootCmd = &cobra.Command{
 		defer db.Close()
 
 		model := tui.NewModel(db)
-		tui.AfterCompletion = time.Duration(afterCompletion)
 
 		p := tea.NewProgram(model)
 		if err := p.Start(); err != nil {
@@ -97,10 +101,12 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&version, "version", "v", false, "display version information")
 
 	rootCmd.PersistentFlags().StringVar(&dsn, "dsn", "", "PostgreSQL data source name")
-	rootCmd.PersistentFlags().IntVarP(&afterCompletion, "AfterCompletion", "a", 10, "Number of seconds to display after completion")
+	rootCmd.PersistentFlags().IntVarP(&afterCompletion, "AfterCompletion", "a", 10, "Number of seconds to display after completion(Seconds)")
+	rootCmd.PersistentFlags().Float64VarP(&interval, "Interval", "i", 0.1, "Number of seconds to display after completion(Seconds)")
 
 	_ = viper.BindPFlag("dsn", rootCmd.PersistentFlags().Lookup("dsn"))
 	_ = viper.BindPFlag("AfterCompletion", rootCmd.PersistentFlags().Lookup("AfterCompletion"))
+	_ = viper.BindPFlag("Interval", rootCmd.PersistentFlags().Lookup("Interval"))
 }
 
 // initConfig reads in config file and ENV variables if set.
