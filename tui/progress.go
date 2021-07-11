@@ -14,7 +14,7 @@ import (
 var (
 	UpdateInterval  time.Duration = time.Second / 10
 	AfterCompletion time.Duration = 10
-	MaxWidth        int           = 80
+	MaxWidth        int           = 40
 )
 
 type tickMsg time.Time
@@ -35,6 +35,7 @@ type Model struct {
 	DB    *sql.DB
 	count int
 	pgrss []pgrs
+	width int
 
 	CreateIndex bool
 	Vacuum      bool
@@ -47,9 +48,12 @@ func (m Model) Init() tea.Cmd {
 	return tickCmd()
 }
 
+type Option func(*Model) error
+
 func NewModel(db *sql.DB) Model {
 	model := Model{
 		DB:          db,
+		width:       MaxWidth,
 		CreateIndex: true,
 		Vacuum:      true,
 		Analyze:     true,
@@ -57,6 +61,14 @@ func NewModel(db *sql.DB) Model {
 		BaseBackup:  true,
 	}
 	return model
+}
+
+func NewProgram(m Model, fullScreen bool) *tea.Program {
+	p := tea.NewProgram(m)
+	if fullScreen {
+		p.EnterAltScreen()
+	}
+	return p
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -93,7 +105,7 @@ func (m *Model) addCreateIndex() error {
 		return err
 	}
 	for _, v := range cindex {
-		m.pgrss = addProgress(m.pgrss, v)
+		m.pgrss = m.addProgress(m.pgrss, v)
 	}
 	return nil
 }
@@ -104,7 +116,7 @@ func (m *Model) addVacuum() error {
 		return err
 	}
 	for _, v := range vacuum {
-		m.pgrss = addProgress(m.pgrss, v)
+		m.pgrss = m.addProgress(m.pgrss, v)
 	}
 	return nil
 }
@@ -115,7 +127,7 @@ func (m *Model) addAnalyze() error {
 		return err
 	}
 	for _, v := range analyze {
-		m.pgrss = addProgress(m.pgrss, v)
+		m.pgrss = m.addProgress(m.pgrss, v)
 	}
 	return nil
 }
@@ -126,7 +138,7 @@ func (m *Model) addCluster() error {
 		return err
 	}
 	for _, v := range cluster {
-		m.pgrss = addProgress(m.pgrss, v)
+		m.pgrss = m.addProgress(m.pgrss, v)
 	}
 	return nil
 }
@@ -137,7 +149,7 @@ func (m *Model) addBaseBackup() error {
 		return err
 	}
 	for _, v := range backup {
-		m.pgrss = addProgress(m.pgrss, v)
+		m.pgrss = m.addProgress(m.pgrss, v)
 	}
 	return nil
 }
@@ -188,7 +200,7 @@ func (m *Model) updateProgress(db *sql.DB) error {
 	return nil
 }
 
-func addProgress(pgrss []pgrs, v pgsp.PGSProgress) []pgrs {
+func (m Model) addProgress(pgrss []pgrs, v pgsp.PGSProgress) []pgrs {
 	for n, pgr := range pgrss {
 		if pgr.v.Name() == v.Name() && pgr.v.Pid() == v.Pid() {
 			pgrss[n].v = v
@@ -198,6 +210,7 @@ func addProgress(pgrss []pgrs, v pgsp.PGSProgress) []pgrs {
 	}
 	pg, err := progress.NewModel(
 		progress.WithScaledGradient("#FF7CCB", "#FDFF8C"),
+		progress.WithWidth(m.width),
 	)
 	if err != nil {
 		log.Println(err)

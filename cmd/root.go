@@ -11,7 +11,6 @@ import (
 	"github.com/noborus/pgsp"
 	"github.com/noborus/pgsp/tui"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -25,13 +24,11 @@ type Config struct {
 	DSN             string  `yaml:"dsn"`
 	AfterCompletion int     `yaml:"AfterCompletion"`
 	Interval        float64 `yaml:"Interval"`
+	FullScreen      bool    `yaml:"FullScreen"`
 }
 
 var (
-	version         bool
-	dsn             string
-	afterCompletion int
-	interval        float64
+	verFlag bool
 )
 
 var (
@@ -48,16 +45,15 @@ var rootCmd = &cobra.Command{
 	Long: `Monitors PostgreSQL's pg_stat_progress_*.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
-		if version {
+		if verFlag {
 			fmt.Printf("pgsp version %s rev:%s\n", Version, Revision)
 			return
 		}
 
-		setConfig(config)
-		tui.AfterCompletion = time.Duration(afterCompletion)
-		tui.UpdateInterval = time.Duration(time.Second * time.Duration(interval))
+		tui.AfterCompletion = time.Duration(config.AfterCompletion)
+		tui.UpdateInterval = time.Duration(time.Second * time.Duration(config.Interval))
 
-		db, err := pgsp.Connect(dsn)
+		db, err := pgsp.Connect(config.DSN)
 		if err != nil {
 			log.Println(err)
 			return
@@ -65,18 +61,12 @@ var rootCmd = &cobra.Command{
 		defer db.Close()
 
 		model := tui.NewModel(db)
-
-		p := tea.NewProgram(model)
+		p := tui.NewProgram(model, config.FullScreen)
 		if err := p.Start(); err != nil {
 			fmt.Printf("there's been an error: %v", err)
 			return
 		}
 	},
-}
-
-func setConfig(config Config) {
-	dsn = config.DSN
-	afterCompletion = config.AfterCompletion
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -98,15 +88,23 @@ func init() {
 	// when this action is called directly.
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
-	rootCmd.PersistentFlags().BoolVarP(&version, "version", "v", false, "display version information")
+	rootCmd.PersistentFlags().BoolVarP(&verFlag, "version", "v", false, "display version information")
 
+	var dsn string
 	rootCmd.PersistentFlags().StringVar(&dsn, "dsn", "", "PostgreSQL data source name")
-	rootCmd.PersistentFlags().IntVarP(&afterCompletion, "AfterCompletion", "a", 10, "Number of seconds to display after completion(Seconds)")
-	rootCmd.PersistentFlags().Float64VarP(&interval, "Interval", "i", 0.1, "Number of seconds to display after completion(Seconds)")
-
 	_ = viper.BindPFlag("dsn", rootCmd.PersistentFlags().Lookup("dsn"))
+
+	var afterCompletion int
+	rootCmd.PersistentFlags().IntVarP(&afterCompletion, "AfterCompletion", "a", 10, "Number of seconds to display after completion(Seconds)")
 	_ = viper.BindPFlag("AfterCompletion", rootCmd.PersistentFlags().Lookup("AfterCompletion"))
+
+	var interval float64
+	rootCmd.PersistentFlags().Float64VarP(&interval, "Interval", "i", 0.1, "Number of seconds to display after completion(Seconds)")
 	_ = viper.BindPFlag("Interval", rootCmd.PersistentFlags().Lookup("Interval"))
+
+	var fullscreen bool
+	rootCmd.PersistentFlags().BoolVarP(&fullscreen, "fullscreen", "f", false, "Display in Full Screen")
+	_ = viper.BindPFlag("FullScreen", rootCmd.PersistentFlags().Lookup("fullscreen"))
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -119,7 +117,7 @@ func initConfig() {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
 
-		// Search config in home directory with name ".pspt" (without extension).
+		// Search config in home directory with name ".pgsp" (without extension).
 		viper.AddConfigPath(home)
 		viper.SetConfigName(".pgsp")
 	}
