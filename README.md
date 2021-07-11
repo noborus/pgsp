@@ -2,6 +2,16 @@
 
 A CUI tool that monitors PostgreSQL's pg_stat_progress*.
 
+## Requires
+
+go 1.16 or later
+
+## Install
+
+```console
+go install github.com/noborus/pgsp/cmd/pgsp@latest
+```
+
 ## Usage
 
 Shows a progress bar if pg_stat_progress * is updated while waiting while running.
