@@ -36,6 +36,7 @@ func GetBaseBackup(db *sql.DB) ([]BaseBackup, error) {
 		return nil, err
 	}
 	defer rows.Close()
+
 	var as []BaseBackup
 	for rows.Next() {
 		var row BaseBackup
@@ -52,7 +53,7 @@ func GetBaseBackup(db *sql.DB) ([]BaseBackup, error) {
 		}
 		as = append(as, row)
 	}
-	return as, nil
+	return as, rows.Err()
 }
 
 func (v BaseBackup) String() []string {

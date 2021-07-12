@@ -39,7 +39,6 @@ var VacuumColumns = []string{
 }
 
 func GetVacuum(db *sql.DB) ([]Vacuum, error) {
-	//tableName := "vacuum_progress"
 	tableName := "pg_stat_progress_vacuum"
 	query := buildQuery(tableName, VacuumColumns)
 	rows, err := db.Query(query)

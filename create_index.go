@@ -49,7 +49,6 @@ var CreateIndexColumns = []string{
 }
 
 func GetCreateIndex(db *sql.DB) ([]CreateIndex, error) {
-	// tableName := "index_progress"
 	tableName := "pg_stat_progress_create_index"
 	query := buildQuery(tableName, CreateIndexColumns)
 	rows, err := db.Query(query)
@@ -58,6 +57,7 @@ func GetCreateIndex(db *sql.DB) ([]CreateIndex, error) {
 	}
 	defer rows.Close()
 	var as []CreateIndex
+
 	for rows.Next() {
 		var row CreateIndex
 		err = rows.Scan(
@@ -82,7 +82,7 @@ func GetCreateIndex(db *sql.DB) ([]CreateIndex, error) {
 		}
 		as = append(as, row)
 	}
-	return as, nil
+	return as, rows.Err()
 }
 
 func (v CreateIndex) String() []string {

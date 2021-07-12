@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	_ "github.com/lib/pq"
+
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -41,7 +42,6 @@ var AnalyzeColumns = []string{
 }
 
 func GetAnalyze(db *sql.DB) ([]Analyze, error) {
-	// tableName := "analyze_progress"
 	tableName := "pg_stat_progress_analyze"
 	query := buildQuery(tableName, AnalyzeColumns)
 	rows, err := db.Query(query)
@@ -49,6 +49,7 @@ func GetAnalyze(db *sql.DB) ([]Analyze, error) {
 		return nil, err
 	}
 	defer rows.Close()
+
 	var as []Analyze
 	for rows.Next() {
 		var row Analyze
@@ -71,7 +72,7 @@ func GetAnalyze(db *sql.DB) ([]Analyze, error) {
 		}
 		as = append(as, row)
 	}
-	return as, nil
+	return as, rows.Err()
 }
 
 func (v Analyze) String() []string {

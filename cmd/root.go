@@ -58,7 +58,7 @@ var rootCmd = &cobra.Command{
 			log.Println(err)
 			return
 		}
-		defer db.Close()
+		defer pgsp.DisConnect(db)
 
 		model := tui.NewModel(db)
 		p := tui.NewProgram(model, config.FullScreen)

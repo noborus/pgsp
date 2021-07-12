@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	_ "github.com/lib/pq"
+
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -48,6 +49,7 @@ func GetCluster(db *sql.DB) ([]Cluster, error) {
 		return nil, err
 	}
 	defer rows.Close()
+
 	var as []Cluster
 	for rows.Next() {
 		var row Cluster
@@ -70,7 +72,7 @@ func GetCluster(db *sql.DB) ([]Cluster, error) {
 		}
 		as = append(as, row)
 	}
-	return as, nil
+	return as, rows.Err()
 }
 
 func (v Cluster) String() []string {
