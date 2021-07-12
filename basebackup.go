@@ -9,6 +9,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
+// pg_stat_progress_basebackup
 type BaseBackup struct {
 	PID                 int    `db:"pid"`
 	PHASE               string `db:"phase"`

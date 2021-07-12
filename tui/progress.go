@@ -14,7 +14,7 @@ import (
 var (
 	UpdateInterval  time.Duration = time.Second / 10
 	AfterCompletion time.Duration = 10
-	MaxWidth        int           = 40
+	RightMargin     int           = 10
 )
 
 type tickMsg time.Time
@@ -32,16 +32,25 @@ type pgrs struct {
 }
 
 type Model struct {
-	DB    *sql.DB
-	count int
-	pgrss []pgrs
-	width int
+	DB     *sql.DB
+	count  int
+	pgrss  []pgrs
+	width  int
+	height int
 
 	CreateIndex bool
 	Vacuum      bool
 	Analyze     bool
 	Cluster     bool
 	BaseBackup  bool
+}
+
+var colorTables map[string][]string = map[string][]string{
+	"pg_stat_progress_analyze":      {"#FF7CCB", "#FDFF8C"},
+	"pg_stat_progress_basebackup":   {"#FDFF8C", "#FF7CCB"},
+	"pg_stat_progress_cluster":      {"#5A56E0", "#EE6FF8"},
+	"pg_stat_progress_create_index": {"#D9DCCF", "#353533"},
+	"pg_stat_progress_vacuum":       {"#FDFF8C", "#FF7CCB"},
 }
 
 func (m Model) Init() tea.Cmd {
@@ -53,7 +62,6 @@ type Option func(*Model) error
 func NewModel(db *sql.DB) Model {
 	model := Model{
 		DB:          db,
-		width:       MaxWidth,
 		CreateIndex: true,
 		Vacuum:      true,
 		Analyze:     true,
@@ -82,10 +90,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tea.WindowSizeMsg:
+		m.height = msg.Height
+		m.width = msg.Width
 		for _, pgrs := range m.pgrss {
-			if pgrs.p.Width > MaxWidth {
-				pgrs.p.Width = MaxWidth
-			}
+			pgrs.p.Width = m.width - RightMargin
 		}
 		return m, nil
 
@@ -97,6 +105,28 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, tickCmd()
 	}
 	return m, nil
+}
+
+func (m Model) View() string {
+	s := "quit: q, ctrl+c, esc\n"
+	num := len(m.pgrss)
+	for _, pgrs := range m.pgrss {
+		if pgrs.p != nil {
+			s += pgrs.v.Name() + "\n"
+			if num*10 < m.height {
+				s += pgrs.v.Table()
+			}
+			p := pgrs.v.Progress()
+			if p > 0 && p <= 1 {
+				s += "\n" + pgrs.p.View(p)
+				if time.Since(pgrs.time) > time.Second*1 {
+					s += " " + time.Since(pgrs.time).Truncate(time.Second).String()
+				}
+				s += "\n"
+			}
+		}
+	}
+	return s
 }
 
 func (m *Model) addCreateIndex() error {
@@ -208,9 +238,10 @@ func (m Model) addProgress(pgrss []pgrs, v pgsp.PGSProgress) []pgrs {
 			return pgrss
 		}
 	}
+	c := colorTables[v.Name()]
 	pg, err := progress.NewModel(
-		progress.WithScaledGradient("#FF7CCB", "#FDFF8C"),
-		progress.WithWidth(m.width),
+		progress.WithScaledGradient(c[0], c[1]),
+		progress.WithWidth(m.width-RightMargin),
 	)
 	if err != nil {
 		log.Println(err)
@@ -223,23 +254,4 @@ func (m Model) addProgress(pgrss []pgrs, v pgsp.PGSProgress) []pgrs {
 	}
 	pgrss = append(pgrss, pgrs)
 	return pgrss
-}
-
-func (m Model) View() string {
-	s := "quit: q, ctrl+c, esc\n"
-	for _, pgrs := range m.pgrss {
-		if pgrs.p != nil {
-			s += pgrs.v.Name() + "\n"
-			s += pgrs.v.Table()
-			p := pgrs.v.Progress()
-			if p > 0 && p <= 1 {
-				s += "\n" + pgrs.p.View(p)
-				if time.Since(pgrs.time) > time.Second*1 {
-					s += " " + time.Since(pgrs.time).Truncate(time.Second).String()
-				}
-				s += "\n"
-			}
-		}
-	}
-	return s
 }

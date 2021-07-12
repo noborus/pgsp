@@ -41,7 +41,6 @@ var ClusterColumns = []string{
 }
 
 func GetCluster(db *sql.DB) ([]Cluster, error) {
-	// tableName := "cluster_progress"
 	tableName := "pg_stat_progress_cluster"
 	query := buildQuery(tableName, ClusterColumns)
 	rows, err := db.Query(query)
