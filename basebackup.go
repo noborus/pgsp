@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	_ "github.com/lib/pq"
+	"github.com/noborus/pgsp/vertical"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -28,9 +29,10 @@ var BaseBackupColumns = []string{
 	"tablespaces_streamed",
 }
 
+var BaseBackupTableName = "pg_stat_progress_basebackup"
+
 func GetBaseBackup(db *sql.DB) ([]BaseBackup, error) {
-	tableName := "pg_stat_progress_basebackup"
-	query := buildQuery(tableName, BaseBackupColumns)
+	query := buildQuery(BaseBackupTableName, BaseBackupColumns)
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -76,8 +78,24 @@ func (v BaseBackup) Table() string {
 	return buff.String()
 }
 
+func (v BaseBackup) Vertical() string {
+	buff := new(bytes.Buffer)
+	vt := vertical.NewWriter(buff)
+	vt.SetHeader(BaseBackupColumns)
+	vt.Append([]interface{}{
+		v.PID,
+		v.PHASE,
+		v.BackupTotal,
+		v.BackupStreamed,
+		v.TablespacesTotal,
+		v.TablespacesStreamed,
+	})
+	vt.Render()
+	return buff.String()
+}
+
 func (v BaseBackup) Name() string {
-	return "pg_stat_progress_basebackup"
+	return BaseBackupTableName
 }
 
 func (v BaseBackup) Progress() float64 {

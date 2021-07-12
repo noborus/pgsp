@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	_ "github.com/lib/pq"
+	"github.com/noborus/pgsp/vertical"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -99,6 +100,27 @@ func (v Vacuum) Table() string {
 	t2.SetHeader(VacuumColumns[7:])
 	t2.Append(value[7:])
 	t2.Render()
+	return buff.String()
+}
+
+func (v Vacuum) Vertical() string {
+	buff := new(bytes.Buffer)
+	vt := vertical.NewWriter(buff)
+	vt.SetHeader(VacuumColumns)
+	vt.Append([]interface{}{
+		v.PID,
+		v.DATID,
+		v.DATNAME,
+		v.RELID,
+		v.PHASE,
+		v.HeapBLKSTotal,
+		v.HeapBLKSScanned,
+		v.HeapBLKSVacuumed,
+		v.IndexVacuumCount,
+		v.MaxDeadTuples,
+		v.NumDeadTuples,
+	})
+	vt.Render()
 	return buff.String()
 }
 

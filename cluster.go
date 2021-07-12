@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	_ "github.com/lib/pq"
+	"github.com/noborus/pgsp/vertical"
 
 	"github.com/olekukonko/tablewriter"
 )
@@ -41,9 +42,10 @@ var ClusterColumns = []string{
 	"index_rebuild_count",
 }
 
+var ClusterTableName = "pg_stat_progress_cluster"
+
 func GetCluster(db *sql.DB) ([]Cluster, error) {
-	tableName := "pg_stat_progress_cluster"
-	query := buildQuery(tableName, ClusterColumns)
+	query := buildQuery(ClusterTableName, ClusterColumns)
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -109,8 +111,30 @@ func (v Cluster) Table() string {
 	return buff.String()
 }
 
+func (v Cluster) Vertical() string {
+	buff := new(bytes.Buffer)
+	vt := vertical.NewWriter(buff)
+	vt.SetHeader(ClusterColumns)
+	vt.Append([]interface{}{
+		v.PID,
+		v.DATID,
+		v.DATNAME,
+		v.RELID,
+		v.Command,
+		v.PHASE,
+		v.ClusterIndexRelid,
+		v.HeapTuplesScanned,
+		v.HeapTuplesWritten,
+		v.HeapBlksTotal,
+		v.HeapBlksScanned,
+		v.IndexRebuildCount,
+	})
+	vt.Render()
+	return buff.String()
+}
+
 func (v Cluster) Name() string {
-	return "pg_stat_progress_cluster"
+	return ClusterTableName
 }
 
 func (v Cluster) Progress() float64 {

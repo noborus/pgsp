@@ -12,6 +12,7 @@ type PGSProgress interface {
 	Pid() int
 	Name() string
 	Table() string
+	Vertical() string
 	Progress() float64
 }
 

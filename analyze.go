@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	_ "github.com/lib/pq"
+	"github.com/noborus/pgsp/vertical"
 
 	"github.com/olekukonko/tablewriter"
 )
@@ -41,9 +42,10 @@ var AnalyzeColumns = []string{
 	"current_child_table_relid",
 }
 
+var AnalyzeTableName = "pg_stat_progress_analyze"
+
 func GetAnalyze(db *sql.DB) ([]Analyze, error) {
-	tableName := "pg_stat_progress_analyze"
-	query := buildQuery(tableName, AnalyzeColumns)
+	query := buildQuery(AnalyzeTableName, AnalyzeColumns)
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -109,8 +111,29 @@ func (v Analyze) Table() string {
 	return buff.String()
 }
 
+func (v Analyze) Vertical() string {
+	buff := new(bytes.Buffer)
+	vt := vertical.NewWriter(buff)
+	vt.SetHeader(AnalyzeColumns)
+	vt.Append([]interface{}{
+		v.PID,
+		v.DATID,
+		v.DATNAME,
+		v.RELID,
+		v.PHASE,
+		v.SampleBLKSScanned,
+		v.ExtStatsTotal,
+		v.ExtStatsComputed,
+		v.ChildTablesTotal,
+		v.ChildTablesDone,
+		v.CurrentChildTableRelid,
+	})
+	vt.Render()
+	return buff.String()
+}
+
 func (v Analyze) Name() string {
-	return "pg_stat_progress_analyze"
+	return AnalyzeTableName
 }
 
 func (v Analyze) Progress() float64 {

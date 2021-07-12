@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	_ "github.com/lib/pq"
+	"github.com/noborus/pgsp/vertical"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -48,9 +49,10 @@ var CreateIndexColumns = []string{
 	"partitions_done",
 }
 
+var CreateIndexTableName = "pg_stat_progress_create_index"
+
 func GetCreateIndex(db *sql.DB) ([]CreateIndex, error) {
-	tableName := "pg_stat_progress_create_index"
-	query := buildQuery(tableName, CreateIndexColumns)
+	query := buildQuery(CreateIndexTableName, CreateIndexColumns)
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -111,20 +113,46 @@ func (v CreateIndex) Table() string {
 	buff := new(bytes.Buffer)
 
 	t := tablewriter.NewWriter(buff)
-	t.SetHeader(CreateIndexColumns[0:7])
-	t.Append(value[0:7])
+	t.SetHeader(CreateIndexColumns[0:9])
+	t.Append(value[0:9])
 	t.Render()
 
 	t2 := tablewriter.NewWriter(buff)
-	t2.SetHeader(CreateIndexColumns[7:])
-	t2.Append(value[7:])
+	t2.SetHeader(CreateIndexColumns[9:])
+	t2.Append(value[9:])
 	t2.Render()
 
 	return buff.String()
 }
 
+func (v CreateIndex) Vertical() string {
+	buff := new(bytes.Buffer)
+	vt := vertical.NewWriter(buff)
+	vt.SetHeader(CreateIndexColumns)
+	vt.Append([]interface{}{
+		v.PID,
+		v.DATID,
+		v.DATNAME,
+		v.RELID,
+		v.IndexRelid,
+		v.Command,
+		v.PHASE,
+		v.LockersTotal,
+		v.LockersDone,
+		v.LockersPid,
+		v.BlocksTotal,
+		v.BlocksDone,
+		v.TuplesTotal,
+		v.TuplesDone,
+		v.PartitionsTotal,
+		v.PartitionsDone,
+	})
+	vt.Render()
+	return buff.String()
+}
+
 func (v CreateIndex) Name() string {
-	return "pg_stat_progress_create_index"
+	return CreateIndexTableName
 }
 
 func (v CreateIndex) Progress() float64 {
