@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	UpdateInterval  time.Duration = time.Second / 10
-	AfterCompletion time.Duration = 10
-	RightMargin     int           = 10
+	UpdateInterval  time.Duration
+	AfterCompletion time.Duration
+	RightMargin     int = 10
 )
 
 type tickMsg time.Time
@@ -33,7 +33,7 @@ type pgrs struct {
 
 type Model struct {
 	DB     *sql.DB
-	count  int
+	spinC  int
 	pgrss  []pgrs
 	width  int
 	height int
@@ -52,6 +52,8 @@ var colorTables map[string][]string = map[string][]string{
 	"pg_stat_progress_create_index": {"#D9DCCF", "#353533"},
 	"pg_stat_progress_vacuum":       {"#FDFF8C", "#FF7CCB"},
 }
+
+var spin []string = []string{"|", "/", "-", "\\"}
 
 func (m Model) Init() tea.Cmd {
 	return tickCmd()
@@ -98,6 +100,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tickMsg:
+		m.spinC++
+		if m.spinC > len(spin)-1 {
+			m.spinC = 0
+		}
 		err := m.updateProgress(m.DB)
 		if err != nil {
 			fmt.Printf("update error:%v", err)
@@ -110,6 +116,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) View() string {
 	s := "quit: q, ctrl+c, esc\n"
 	num := len(m.pgrss)
+	if num == 0 {
+		s = spin[m.spinC] + " " + s
+		return s
+	}
 	for _, pgrs := range m.pgrss {
 		if pgrs.p != nil {
 			s += pgrs.v.Name() + "\n"

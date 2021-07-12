@@ -51,7 +51,7 @@ var rootCmd = &cobra.Command{
 		}
 
 		tui.AfterCompletion = time.Duration(config.AfterCompletion)
-		tui.UpdateInterval = time.Duration(time.Second * time.Duration(config.Interval))
+		tui.UpdateInterval = time.Duration(time.Millisecond * time.Duration(config.Interval*1000))
 
 		db, err := pgsp.Connect(config.DSN)
 		if err != nil {
@@ -99,7 +99,7 @@ func init() {
 	_ = viper.BindPFlag("AfterCompletion", rootCmd.PersistentFlags().Lookup("AfterCompletion"))
 
 	var interval float64
-	rootCmd.PersistentFlags().Float64VarP(&interval, "Interval", "i", 0.1, "Number of seconds to display after completion(Seconds)")
+	rootCmd.PersistentFlags().Float64VarP(&interval, "Interval", "i", 0.5, "Number of seconds to display after completion(Seconds)")
 	_ = viper.BindPFlag("Interval", rootCmd.PersistentFlags().Lookup("Interval"))
 
 	var fullscreen bool
