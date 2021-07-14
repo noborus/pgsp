@@ -13,6 +13,8 @@ go 1.16 or later
 
 ## Install
 
+[Download binary](https://github.com/noborus/pgsp/releases/tag/v0.0.1)
+
 ```console
 go install github.com/noborus/pgsp/cmd/pgsp@latest
 ```
