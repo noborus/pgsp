@@ -1,6 +1,7 @@
 # pgsp - PostgreSQL Stat Progress CLI Monitor
 
 A CUI tool that monitors PostgreSQL's pg_stat_progress*.
+
 Supported progress reports are ANALYZE, CLUSTER, CREATE INDEX, VACUUM, and BASE_BACKUP.
 See [Progress Reporting](https://www.postgresql.org/docs/current/progress-reporting.html) for more information.
 
@@ -13,7 +14,11 @@ go 1.16 or later
 
 ## Install
 
-[Download binary](https://github.com/noborus/pgsp/releases/tag/v0.0.1)
+### Download binary
+
+[releases page](https://github.com/noborus/pgsp/releases/tag/v0.0.1).
+
+### Go install
 
 ```console
 go install github.com/noborus/pgsp/cmd/pgsp@latest
