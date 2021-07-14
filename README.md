@@ -1,6 +1,8 @@
-# pgsp - PostgreSQL Stat Progress Monitor
+# pgsp - PostgreSQL Stat Progress CLI Monitor
 
 A CUI tool that monitors PostgreSQL's pg_stat_progress*.
+Supported progress reports are ANALYZE, CLUSTER, CREATE INDEX, VACUUM, and BASE_BACKUP.
+See [Progress Reporting](https://www.postgresql.org/docs/current/progress-reporting.html) for more information.
 
 ![pgsp.png](https://raw.githubusercontent.com/noborus/pgsp/master/docs/pgsp.png)
 
@@ -41,8 +43,8 @@ Usage:
   pgsp [flags]
 
 Flags:
-  -a, --AfterCompletion int   Number of seconds to display after completion(Seconds) (default 10)
-  -i, --Interval float        Number of seconds to display after completion(Seconds) (default 0.5)
+  -a, --AfterCompletion int   Time to display after completion(Seconds) (default 10)
+  -i, --Interval float        Update interval(Seconds) (default 0.5)
       --config string         config file (default is $HOME/.pgsp.yaml)
       --dsn string            PostgreSQL data source name
   -f, --fullscreen            Display in Full Screen

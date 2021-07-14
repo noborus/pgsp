@@ -95,11 +95,11 @@ func init() {
 	_ = viper.BindPFlag("dsn", rootCmd.PersistentFlags().Lookup("dsn"))
 
 	var afterCompletion int
-	rootCmd.PersistentFlags().IntVarP(&afterCompletion, "AfterCompletion", "a", 10, "Number of seconds to display after completion(Seconds)")
+	rootCmd.PersistentFlags().IntVarP(&afterCompletion, "AfterCompletion", "a", 10, "Time to display after completion(Seconds)")
 	_ = viper.BindPFlag("AfterCompletion", rootCmd.PersistentFlags().Lookup("AfterCompletion"))
 
 	var interval float64
-	rootCmd.PersistentFlags().Float64VarP(&interval, "Interval", "i", 0.5, "Number of seconds to display after completion(Seconds)")
+	rootCmd.PersistentFlags().Float64VarP(&interval, "Interval", "i", 0.5, "Update interval(Seconds)")
 	_ = viper.BindPFlag("Interval", rootCmd.PersistentFlags().Lookup("Interval"))
 
 	var fullscreen bool
