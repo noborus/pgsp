@@ -2,6 +2,7 @@ package pgsp
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"strconv"
 
@@ -21,7 +22,7 @@ type CreateIndex struct {
 	PHASE           string `db:"phase"`
 	LockersTotal    int64  `db:"lockers_total"`
 	LockersDone     int64  `db:"lockers_done"`
-	LockersPid      int    `db:"current_locker_pid"`
+	LockersPid      int64  `db:"current_locker_pid"`
 	BlocksTotal     int64  `db:"blocks_total"`
 	BlocksDone      int64  `db:"blocks_done"`
 	TuplesTotal     int64  `db:"tuples_total"`
@@ -29,6 +30,8 @@ type CreateIndex struct {
 	PartitionsTotal int64  `db:"partitions_total"`
 	PartitionsDone  int64  `db:"partitions__done"`
 }
+
+var CreateIndexTableName = "pg_stat_progress_create_index"
 
 var CreateIndexColumns = []string{
 	"pid",
@@ -49,17 +52,19 @@ var CreateIndexColumns = []string{
 	"partitions_done",
 }
 
-var CreateIndexTableName = "pg_stat_progress_create_index"
-
-func GetCreateIndex(db *sql.DB) ([]CreateIndex, error) {
+func GetCreateIndex(ctx context.Context, db *sql.DB) ([]CreateIndex, error) {
 	query := buildQuery(CreateIndexTableName, CreateIndexColumns)
-	rows, err := db.Query(query)
+	return selectCreateIndex(ctx, db, query)
+}
+
+func selectCreateIndex(ctx context.Context, db *sql.DB, query string) ([]CreateIndex, error) {
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var as []CreateIndex
 
+	var as []CreateIndex
 	for rows.Next() {
 		var row CreateIndex
 		err = rows.Scan(
@@ -87,7 +92,7 @@ func GetCreateIndex(db *sql.DB) ([]CreateIndex, error) {
 	return as, rows.Err()
 }
 
-func (v CreateIndex) String() []string {
+func (v CreateIndex) strings() []string {
 	return []string{
 		strconv.Itoa(v.PID),
 		strconv.Itoa(v.DATID),
@@ -98,7 +103,7 @@ func (v CreateIndex) String() []string {
 		v.PHASE,
 		strconv.FormatInt(v.LockersTotal, 10),
 		strconv.FormatInt(v.LockersDone, 10),
-		strconv.Itoa(v.LockersPid),
+		strconv.FormatInt(v.LockersPid, 10),
 		strconv.FormatInt(v.BlocksTotal, 10),
 		strconv.FormatInt(v.BlocksDone, 10),
 		strconv.FormatInt(v.TuplesTotal, 10),
@@ -108,8 +113,16 @@ func (v CreateIndex) String() []string {
 	}
 }
 
+func (v CreateIndex) Name() string {
+	return CreateIndexTableName
+}
+
+func (v CreateIndex) Pid() int {
+	return v.PID
+}
+
 func (v CreateIndex) Table() string {
-	value := v.String()
+	value := v.strings()
 	buff := new(bytes.Buffer)
 
 	t := tablewriter.NewWriter(buff)
@@ -151,17 +164,9 @@ func (v CreateIndex) Vertical() string {
 	return buff.String()
 }
 
-func (v CreateIndex) Name() string {
-	return CreateIndexTableName
-}
-
 func (v CreateIndex) Progress() float64 {
 	if v.BlocksTotal != 0 {
 		return float64(v.BlocksDone) / float64(v.BlocksTotal)
 	}
 	return float64(v.TuplesDone) / float64(v.TuplesTotal)
-}
-
-func (v CreateIndex) Pid() int {
-	return v.PID
 }

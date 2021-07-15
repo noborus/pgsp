@@ -2,6 +2,7 @@ package pgsp
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"strconv"
 
@@ -44,9 +45,14 @@ var ClusterColumns = []string{
 
 var ClusterTableName = "pg_stat_progress_cluster"
 
-func GetCluster(db *sql.DB) ([]Cluster, error) {
+func GetCluster(ctx context.Context, db *sql.DB) ([]Cluster, error) {
 	query := buildQuery(ClusterTableName, ClusterColumns)
-	rows, err := db.Query(query)
+	return selectCluster(ctx, db, query)
+
+}
+
+func selectCluster(ctx context.Context, db *sql.DB, query string) ([]Cluster, error) {
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +83,7 @@ func GetCluster(db *sql.DB) ([]Cluster, error) {
 	return as, rows.Err()
 }
 
-func (v Cluster) String() []string {
+func (v Cluster) strings() []string {
 	return []string{
 		strconv.Itoa(v.PID),
 		strconv.Itoa(v.DATID),
@@ -94,8 +100,16 @@ func (v Cluster) String() []string {
 	}
 }
 
+func (v Cluster) Name() string {
+	return ClusterTableName
+}
+
+func (v Cluster) Pid() int {
+	return v.PID
+}
+
 func (v Cluster) Table() string {
-	value := v.String()
+	value := v.strings()
 	buff := new(bytes.Buffer)
 
 	t := tablewriter.NewWriter(buff)
@@ -133,14 +147,6 @@ func (v Cluster) Vertical() string {
 	return buff.String()
 }
 
-func (v Cluster) Name() string {
-	return ClusterTableName
-}
-
 func (v Cluster) Progress() float64 {
 	return float64(v.HeapBlksScanned) / float64(v.HeapBlksTotal)
-}
-
-func (v Cluster) Pid() int {
-	return v.PID
 }

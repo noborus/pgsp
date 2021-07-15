@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -83,6 +84,7 @@ func NewProgram(m Model, fullScreen bool) *tea.Program {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	ctx := context.TODO()
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -105,7 +107,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.spinC > len(spin)-1 {
 			m.spinC = 0
 		}
-		err := m.updateProgress(m.DB)
+		err := m.updateProgress(ctx, m.DB)
 		if err != nil {
 			fmt.Printf("update error:%v", err)
 		}
@@ -150,8 +152,8 @@ func (m Model) View() string {
 	return s
 }
 
-func (m *Model) addCreateIndex() error {
-	cindex, err := pgsp.GetCreateIndex(m.DB)
+func (m *Model) addCreateIndex(ctx context.Context) error {
+	cindex, err := pgsp.GetCreateIndex(ctx, m.DB)
 	if err != nil {
 		return err
 	}
@@ -161,8 +163,8 @@ func (m *Model) addCreateIndex() error {
 	return nil
 }
 
-func (m *Model) addVacuum() error {
-	vacuum, err := pgsp.GetVacuum(m.DB)
+func (m *Model) addVacuum(ctx context.Context) error {
+	vacuum, err := pgsp.GetVacuum(ctx, m.DB)
 	if err != nil {
 		return err
 	}
@@ -172,8 +174,8 @@ func (m *Model) addVacuum() error {
 	return nil
 }
 
-func (m *Model) addAnalyze() error {
-	analyze, err := pgsp.GetAnalyze(m.DB)
+func (m *Model) addAnalyze(ctx context.Context) error {
+	analyze, err := pgsp.GetAnalyze(ctx, m.DB)
 	if err != nil {
 		return err
 	}
@@ -183,8 +185,8 @@ func (m *Model) addAnalyze() error {
 	return nil
 }
 
-func (m *Model) addCluster() error {
-	cluster, err := pgsp.GetCluster(m.DB)
+func (m *Model) addCluster(ctx context.Context) error {
+	cluster, err := pgsp.GetCluster(ctx, m.DB)
 	if err != nil {
 		return err
 	}
@@ -194,8 +196,8 @@ func (m *Model) addCluster() error {
 	return nil
 }
 
-func (m *Model) addBaseBackup() error {
-	backup, err := pgsp.GetBaseBackup(m.DB)
+func (m *Model) addBaseBackup(ctx context.Context) error {
+	backup, err := pgsp.GetBaseBackup(ctx, m.DB)
 	if err != nil {
 		return err
 	}
@@ -205,37 +207,37 @@ func (m *Model) addBaseBackup() error {
 	return nil
 }
 
-func (m *Model) updateProgress(db *sql.DB) error {
+func (m *Model) updateProgress(ctx context.Context, db *sql.DB) error {
 	if m.CreateIndex {
-		if err := m.addCreateIndex(); err != nil {
+		if err := m.addCreateIndex(ctx); err != nil {
 			log.Println(err)
 			m.CreateIndex = false
 		}
 	}
 
 	if m.Vacuum {
-		if err := m.addVacuum(); err != nil {
+		if err := m.addVacuum(ctx); err != nil {
 			log.Println(err)
 			m.Vacuum = false
 		}
 	}
 
 	if m.Analyze {
-		if err := m.addAnalyze(); err != nil {
+		if err := m.addAnalyze(ctx); err != nil {
 			log.Println(err)
 			m.Analyze = false
 		}
 	}
 
 	if m.Cluster {
-		if err := m.addCluster(); err != nil {
+		if err := m.addCluster(ctx); err != nil {
 			log.Println(err)
 			m.Cluster = false
 		}
 	}
 
 	if m.BaseBackup {
-		if err := m.addBaseBackup(); err != nil {
+		if err := m.addBaseBackup(ctx); err != nil {
 			log.Println(err)
 			m.BaseBackup = false
 		}

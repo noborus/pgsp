@@ -17,7 +17,7 @@ func TestCreateIndex_Table(t *testing.T) {
 		PHASE           string
 		LockersTotal    int64
 		LockersDone     int64
-		LockersPid      int
+		LockersPid      int64
 		BlocksTotal     int64
 		BlocksDone      int64
 		TuplesTotal     int64
@@ -31,7 +31,7 @@ func TestCreateIndex_Table(t *testing.T) {
 		want   string
 	}{
 		{
-			name:   "test1",
+			name:   "test0",
 			fields: fields{},
 			want: `+-----+-------+---------+-------+-------------+---------+-------+---------------+--------------+
 | PID | DATID | DATNAME | RELID | INDEX RELID | COMMAND | PHASE | LOCKERS TOTAL | LOCKERS DONE |

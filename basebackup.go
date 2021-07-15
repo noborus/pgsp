@@ -2,6 +2,7 @@ package pgsp
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"strconv"
 
@@ -31,9 +32,13 @@ var BaseBackupColumns = []string{
 
 var BaseBackupTableName = "pg_stat_progress_basebackup"
 
-func GetBaseBackup(db *sql.DB) ([]BaseBackup, error) {
+func GetBaseBackup(ctx context.Context, db *sql.DB) ([]BaseBackup, error) {
 	query := buildQuery(BaseBackupTableName, BaseBackupColumns)
-	rows, err := db.Query(query)
+	return selectBaseBackup(ctx, db, query)
+}
+
+func selectBaseBackup(ctx context.Context, db *sql.DB, query string) ([]BaseBackup, error) {
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +63,7 @@ func GetBaseBackup(db *sql.DB) ([]BaseBackup, error) {
 	return as, rows.Err()
 }
 
-func (v BaseBackup) String() []string {
+func (v BaseBackup) strings() []string {
 	return []string{
 		strconv.Itoa(v.PID),
 		v.PHASE,
@@ -69,11 +74,19 @@ func (v BaseBackup) String() []string {
 	}
 }
 
+func (v BaseBackup) Name() string {
+	return BaseBackupTableName
+}
+
+func (v BaseBackup) Pid() int {
+	return v.PID
+}
+
 func (v BaseBackup) Table() string {
 	buff := new(bytes.Buffer)
 	t := tablewriter.NewWriter(buff)
 	t.SetHeader(BaseBackupColumns)
-	t.Append(v.String())
+	t.Append(v.strings())
 	t.Render()
 	return buff.String()
 }
@@ -94,17 +107,9 @@ func (v BaseBackup) Vertical() string {
 	return buff.String()
 }
 
-func (v BaseBackup) Name() string {
-	return BaseBackupTableName
-}
-
 func (v BaseBackup) Progress() float64 {
 	if v.BackupTotal != 0 {
 		return float64(v.BackupStreamed) / float64(v.BackupTotal)
 	}
 	return float64(v.TablespacesStreamed) / float64(v.TablespacesTotal)
-}
-
-func (v BaseBackup) Pid() int {
-	return v.PID
 }

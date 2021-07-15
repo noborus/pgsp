@@ -2,6 +2,7 @@ package pgsp
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"strconv"
 
@@ -39,10 +40,14 @@ var VacuumColumns = []string{
 	"num_dead_tuples",
 }
 
-func GetVacuum(db *sql.DB) ([]Vacuum, error) {
+func GetVacuum(ctx context.Context, db *sql.DB) ([]Vacuum, error) {
 	tableName := "pg_stat_progress_vacuum"
 	query := buildQuery(tableName, VacuumColumns)
-	rows, err := db.Query(query)
+	return selectVacuum(ctx, db, query)
+}
+
+func selectVacuum(ctx context.Context, db *sql.DB, query string) ([]Vacuum, error) {
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +76,7 @@ func GetVacuum(db *sql.DB) ([]Vacuum, error) {
 	return as, nil
 }
 
-func (v Vacuum) String() []string {
+func (v Vacuum) strings() []string {
 	return []string{
 		strconv.Itoa(v.PID),
 		strconv.Itoa(v.DATID),
@@ -88,7 +93,7 @@ func (v Vacuum) String() []string {
 }
 
 func (v Vacuum) Table() string {
-	value := v.String()
+	value := v.strings()
 
 	buff := new(bytes.Buffer)
 	t := tablewriter.NewWriter(buff)

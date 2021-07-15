@@ -2,6 +2,7 @@ package pgsp
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"strconv"
 
@@ -44,9 +45,13 @@ var AnalyzeColumns = []string{
 
 var AnalyzeTableName = "pg_stat_progress_analyze"
 
-func GetAnalyze(db *sql.DB) ([]Analyze, error) {
+func GetAnalyze(ctx context.Context, db *sql.DB) ([]Analyze, error) {
 	query := buildQuery(AnalyzeTableName, AnalyzeColumns)
-	rows, err := db.Query(query)
+	return selectAnalyze(ctx, db, query)
+}
+
+func selectAnalyze(ctx context.Context, db *sql.DB, query string) ([]Analyze, error) {
+	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +82,7 @@ func GetAnalyze(db *sql.DB) ([]Analyze, error) {
 	return as, rows.Err()
 }
 
-func (v Analyze) String() []string {
+func (v Analyze) strings() []string {
 	return []string{
 		strconv.Itoa(v.PID),
 		strconv.Itoa(v.DATID),
@@ -94,8 +99,16 @@ func (v Analyze) String() []string {
 	}
 }
 
+func (v Analyze) Name() string {
+	return AnalyzeTableName
+}
+
+func (v Analyze) Pid() int {
+	return v.PID
+}
+
 func (v Analyze) Table() string {
-	value := v.String()
+	value := v.strings()
 	buff := new(bytes.Buffer)
 
 	t := tablewriter.NewWriter(buff)
@@ -132,14 +145,6 @@ func (v Analyze) Vertical() string {
 	return buff.String()
 }
 
-func (v Analyze) Name() string {
-	return AnalyzeTableName
-}
-
 func (v Analyze) Progress() float64 {
 	return float64(v.SampleBLKSScanned) / float64(v.SampleBLKSTotal)
-}
-
-func (v Analyze) Pid() int {
-	return v.PID
 }
