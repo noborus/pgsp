@@ -63,17 +63,6 @@ func selectBaseBackup(ctx context.Context, db *sql.DB, query string) ([]BaseBack
 	return as, rows.Err()
 }
 
-func (v BaseBackup) strings() []string {
-	return []string{
-		strconv.Itoa(v.PID),
-		v.PHASE,
-		strconv.FormatInt(v.BackupTotal, 10),
-		strconv.FormatInt(v.BackupStreamed, 10),
-		strconv.FormatInt(v.TablespacesTotal, 10),
-		strconv.FormatInt(v.TablespacesStreamed, 10),
-	}
-}
-
 func (v BaseBackup) Name() string {
 	return BaseBackupTableName
 }
@@ -86,7 +75,14 @@ func (v BaseBackup) Table() string {
 	buff := new(bytes.Buffer)
 	t := tablewriter.NewWriter(buff)
 	t.SetHeader(BaseBackupColumns)
-	t.Append(v.strings())
+	t.Append([]string{
+		strconv.Itoa(v.PID),
+		v.PHASE,
+		strconv.FormatInt(v.BackupTotal, 10),
+		strconv.FormatInt(v.BackupStreamed, 10),
+		strconv.FormatInt(v.TablespacesTotal, 10),
+		strconv.FormatInt(v.TablespacesStreamed, 10),
+	})
 	t.Render()
 	return buff.String()
 }

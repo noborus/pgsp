@@ -40,9 +40,10 @@ var VacuumColumns = []string{
 	"num_dead_tuples",
 }
 
+var VacuumTableName = "pg_stat_progress_vacuum"
+
 func GetVacuum(ctx context.Context, db *sql.DB) ([]Vacuum, error) {
-	tableName := "pg_stat_progress_vacuum"
-	query := buildQuery(tableName, VacuumColumns)
+	query := buildQuery(VacuumTableName, VacuumColumns)
 	return selectVacuum(ctx, db, query)
 }
 
@@ -52,6 +53,7 @@ func selectVacuum(ctx context.Context, db *sql.DB, query string) ([]Vacuum, erro
 		return nil, err
 	}
 	defer rows.Close()
+
 	var as []Vacuum
 	for rows.Next() {
 		var row Vacuum
@@ -76,8 +78,16 @@ func selectVacuum(ctx context.Context, db *sql.DB, query string) ([]Vacuum, erro
 	return as, nil
 }
 
-func (v Vacuum) strings() []string {
-	return []string{
+func (v Vacuum) Name() string {
+	return VacuumTableName
+}
+
+func (v Vacuum) Pid() int {
+	return v.PID
+}
+
+func (v Vacuum) Table() string {
+	value := []string{
 		strconv.Itoa(v.PID),
 		strconv.Itoa(v.DATID),
 		v.DATNAME,
@@ -90,10 +100,6 @@ func (v Vacuum) strings() []string {
 		strconv.FormatInt(v.MaxDeadTuples, 10),
 		strconv.FormatInt(v.NumDeadTuples, 10),
 	}
-}
-
-func (v Vacuum) Table() string {
-	value := v.strings()
 
 	buff := new(bytes.Buffer)
 	t := tablewriter.NewWriter(buff)
@@ -129,14 +135,6 @@ func (v Vacuum) Vertical() string {
 	return buff.String()
 }
 
-func (v Vacuum) Name() string {
-	return "pg_stat_progress_vacuum"
-}
-
 func (v Vacuum) Progress() float64 {
 	return float64(v.HeapBLKSScanned) / float64(v.HeapBLKSTotal)
-}
-
-func (v Vacuum) Pid() int {
-	return v.PID
 }

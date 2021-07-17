@@ -82,8 +82,16 @@ func selectAnalyze(ctx context.Context, db *sql.DB, query string) ([]Analyze, er
 	return as, rows.Err()
 }
 
-func (v Analyze) strings() []string {
-	return []string{
+func (v Analyze) Name() string {
+	return AnalyzeTableName
+}
+
+func (v Analyze) Pid() int {
+	return v.PID
+}
+
+func (v Analyze) Table() string {
+	value := []string{
 		strconv.Itoa(v.PID),
 		strconv.Itoa(v.DATID),
 		v.DATNAME,
@@ -97,18 +105,7 @@ func (v Analyze) strings() []string {
 		strconv.FormatInt(v.ChildTablesDone, 10),
 		strconv.Itoa(v.CurrentChildTableRelid),
 	}
-}
 
-func (v Analyze) Name() string {
-	return AnalyzeTableName
-}
-
-func (v Analyze) Pid() int {
-	return v.PID
-}
-
-func (v Analyze) Table() string {
-	value := v.strings()
 	buff := new(bytes.Buffer)
 
 	t := tablewriter.NewWriter(buff)

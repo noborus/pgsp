@@ -83,8 +83,16 @@ func selectCluster(ctx context.Context, db *sql.DB, query string) ([]Cluster, er
 	return as, rows.Err()
 }
 
-func (v Cluster) strings() []string {
-	return []string{
+func (v Cluster) Name() string {
+	return ClusterTableName
+}
+
+func (v Cluster) Pid() int {
+	return v.PID
+}
+
+func (v Cluster) Table() string {
+	value := []string{
 		strconv.Itoa(v.PID),
 		strconv.Itoa(v.DATID),
 		v.DATNAME,
@@ -98,18 +106,6 @@ func (v Cluster) strings() []string {
 		strconv.FormatInt(v.HeapBlksScanned, 10),
 		strconv.FormatInt(v.IndexRebuildCount, 10),
 	}
-}
-
-func (v Cluster) Name() string {
-	return ClusterTableName
-}
-
-func (v Cluster) Pid() int {
-	return v.PID
-}
-
-func (v Cluster) Table() string {
-	value := v.strings()
 	buff := new(bytes.Buffer)
 
 	t := tablewriter.NewWriter(buff)

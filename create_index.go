@@ -92,8 +92,16 @@ func selectCreateIndex(ctx context.Context, db *sql.DB, query string) ([]CreateI
 	return as, rows.Err()
 }
 
-func (v CreateIndex) strings() []string {
-	return []string{
+func (v CreateIndex) Name() string {
+	return CreateIndexTableName
+}
+
+func (v CreateIndex) Pid() int {
+	return v.PID
+}
+
+func (v CreateIndex) Table() string {
+	value := []string{
 		strconv.Itoa(v.PID),
 		strconv.Itoa(v.DATID),
 		v.DATNAME,
@@ -111,18 +119,7 @@ func (v CreateIndex) strings() []string {
 		strconv.FormatInt(v.PartitionsTotal, 10),
 		strconv.FormatInt(v.PartitionsDone, 10),
 	}
-}
 
-func (v CreateIndex) Name() string {
-	return CreateIndexTableName
-}
-
-func (v CreateIndex) Pid() int {
-	return v.PID
-}
-
-func (v CreateIndex) Table() string {
-	value := v.strings()
 	buff := new(bytes.Buffer)
 
 	t := tablewriter.NewWriter(buff)

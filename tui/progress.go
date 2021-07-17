@@ -140,6 +140,7 @@ func (m Model) View() string {
 			p := pgrs.v.Progress()
 			if p > 0 && p <= 1 {
 				if time.Since(pgrs.time) > time.Second*1 {
+					// Deleted records are considered 100%.
 					s += "\n" + pgrs.p.View(1)
 					s += " " + time.Since(pgrs.time).Truncate(time.Second).String()
 				} else {
