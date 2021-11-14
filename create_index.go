@@ -165,5 +165,8 @@ func (v CreateIndex) Progress() float64 {
 	if v.BlocksTotal != 0 {
 		return float64(v.BlocksDone) / float64(v.BlocksTotal)
 	}
+	if v.PartitionsTotal != 0 {
+		return float64(v.PartitionsDone) / float64(v.PartitionsTotal)
+	}
 	return float64(v.TuplesDone) / float64(v.TuplesTotal)
 }

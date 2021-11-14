@@ -44,29 +44,34 @@ var rootCmd = &cobra.Command{
 	Short: "pg_stat_progress monitor",
 	Long: `Monitors PostgreSQL's pg_stat_progress_*.
 `,
+	Version: Version + " rev:" + Revision,
 	Run: func(cmd *cobra.Command, args []string) {
-		if verFlag {
-			fmt.Printf("pgsp version %s rev:%s\n", Version, Revision)
-			return
-		}
-
-		tui.AfterCompletion = time.Duration(config.AfterCompletion)
-		tui.UpdateInterval = time.Duration(time.Millisecond * time.Duration(config.Interval*1000))
-
-		db, err := pgsp.Connect(config.DSN)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		defer pgsp.DisConnect(db)
-
-		model := tui.NewModel(db)
-		p := tui.NewProgram(model, config.FullScreen)
-		if err := p.Start(); err != nil {
-			fmt.Printf("there's been an error: %v", err)
-			return
-		}
+		Progress(tui.All)
 	},
+}
+
+func Progress(targets int) {
+	setConfig()
+	db, err := pgsp.Connect(config.DSN)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer pgsp.DisConnect(db)
+
+	model := tui.NewModel(db)
+	tui.Targets(&model, targets)
+
+	p := tui.NewProgram(model, config.FullScreen)
+	if err := p.Start(); err != nil {
+		fmt.Printf("there's been an error: %v", err)
+		return
+	}
+}
+
+func setConfig() {
+	tui.AfterCompletion = time.Duration(config.AfterCompletion)
+	tui.UpdateInterval = time.Duration(time.Millisecond * time.Duration(config.Interval*1000))
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

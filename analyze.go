@@ -143,5 +143,11 @@ func (v Analyze) Vertical() string {
 }
 
 func (v Analyze) Progress() float64 {
+	if v.ChildTablesTotal != 0 {
+		return float64(v.ChildTablesDone) / float64(v.ChildTablesTotal)
+	}
+	if v.ExtStatsTotal != 0 {
+		return float64(v.ExtStatsComputed) / float64(v.ExtStatsTotal)
+	}
 	return float64(v.SampleBLKSScanned) / float64(v.SampleBLKSTotal)
 }

@@ -14,9 +14,11 @@ import (
 )
 
 var (
-	UpdateInterval  time.Duration
-	AfterCompletion time.Duration
-	RightMargin     int = 10
+	UpdateInterval    time.Duration
+	AfterCompletion   time.Duration
+	RightMargin       int = 10
+	MinimumTableWidth int = 120
+	MaxVerticalRows   int = 15
 )
 
 type tickMsg time.Time
@@ -34,12 +36,11 @@ type pgrs struct {
 }
 
 type Model struct {
-	DB     *sql.DB
-	spinC  int
-	pgrss  []pgrs
-	width  int
-	height int
-
+	DB          *sql.DB
+	spinC       int
+	pgrss       []pgrs
+	width       int
+	height      int
 	CreateIndex bool
 	Vacuum      bool
 	Analyze     bool
@@ -47,12 +48,21 @@ type Model struct {
 	BaseBackup  bool
 }
 
+const (
+	All = iota
+	Analyze
+	CreateIndex
+	Vacuum
+	Cluster
+	BaseBackup
+)
+
 var colorTables map[string][]string = map[string][]string{
 	"pg_stat_progress_analyze":      {"#FF7CCB", "#FDFF8C"},
-	"pg_stat_progress_basebackup":   {"#FDFF8C", "#FF7CCB"},
-	"pg_stat_progress_cluster":      {"#5A56E0", "#EE6FF8"},
 	"pg_stat_progress_create_index": {"#EE6FF8", "#5A56E0"},
 	"pg_stat_progress_vacuum":       {"#5A56E0", "#FF7CCB"},
+	"pg_stat_progress_cluster":      {"#5A56E0", "#EE6FF8"},
+	"pg_stat_progress_basebackup":   {"#FDFF8C", "#FF7CCB"},
 }
 
 var spin []string = []string{"|", "/", "-", "\\"}
@@ -66,11 +76,37 @@ type Option func(*Model) error
 func NewModel(db *sql.DB) Model {
 	model := Model{
 		DB:          db,
+		Analyze:     true,
 		CreateIndex: true,
 		Vacuum:      true,
-		Analyze:     true,
 		Cluster:     true,
 		BaseBackup:  true,
+	}
+	return model
+}
+
+func Targets(model *Model, t int) *Model {
+	if t != All {
+		model.Analyze = false
+		model.CreateIndex = false
+		model.Vacuum = false
+		model.Cluster = false
+		model.BaseBackup = false
+		if t == Analyze {
+			model.Analyze = true
+		}
+		if t == CreateIndex {
+			model.CreateIndex = true
+		}
+		if t == Vacuum {
+			model.Vacuum = true
+		}
+		if t == Cluster {
+			model.Cluster = true
+		}
+		if t == BaseBackup {
+			model.BaseBackup = true
+		}
 	}
 	return model
 }
@@ -127,13 +163,14 @@ func (m Model) View() string {
 		Bold(true).
 		Foreground(lipgloss.Color("#FAFAFA")).
 		Background(lipgloss.Color("#7D56F4"))
+
 	for _, pgrs := range m.pgrss {
 		if pgrs.p != nil {
 			s += style.Render(pgrs.v.Name()) + "\n"
-			if m.width >= 120 {
+			if m.width >= MinimumTableWidth {
 				s += pgrs.v.Table()
 			} else {
-				if num*15 < m.height {
+				if num*MaxVerticalRows < m.height {
 					s += pgrs.v.Vertical()
 				}
 			}
