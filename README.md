@@ -2,11 +2,10 @@
 
 A CUI tool that monitors PostgreSQL's pg_stat_progress*.
 
-Supported progress reports are ANALYZE, CLUSTER, CREATE INDEX, VACUUM, and BASE_BACKUP.
+Supported progress reports are ANALYZE, CLUSTER, CREATE INDEX, VACUUM, COPY, and BASE_BACKUP.
 See [Progress Reporting](https://www.postgresql.org/docs/current/progress-reporting.html) for more information.
 
 ![pgsp.png](https://raw.githubusercontent.com/noborus/pgsp/master/docs/pgsp.png)
-
 
 ## Requires
 
@@ -16,7 +15,7 @@ go 1.16 or later
 
 ### Download binary
 
-[releases page](https://github.com/noborus/pgsp/releases/tag/v0.0.1).
+[releases page](https://github.com/noborus/pgsp/releases/).
 
 ### Go install
 
@@ -43,11 +42,27 @@ pg_stat_progress_basebackup
 █████████████████████████░░░░░░░░░░░░░░░░░░  56%
 ```
 
+It is also possible to specify one of the `analyze`, `basebackup`, `cluster`, `copy`, `createindex`, `vacuums` for monitoring.
+
+```console
+pgsp basebackup
+```
+
 ```console
 Monitors PostgreSQL's pg_stat_progress_*.
 
 Usage:
   pgsp [flags]
+  pgsp [command]
+
+Available Commands:
+  analyze     analyze
+  basebackup  basebackup
+  cluster     cluster
+  copy        copy
+  createindex createindex
+  help        Help about any command
+  vacuum      vacuum
 
 Flags:
   -a, --AfterCompletion int   Time to display after completion(Seconds) (default 10)
@@ -58,4 +73,6 @@ Flags:
   -h, --help                  help for pgsp
   -t, --toggle                Help message for toggle
   -v, --version               display version information
+
+Use "pgsp [command] --help" for more information about a command.
 ```
