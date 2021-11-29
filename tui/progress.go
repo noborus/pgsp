@@ -46,6 +46,7 @@ type Model struct {
 	Analyze     bool
 	Cluster     bool
 	BaseBackup  bool
+	Copy        bool
 }
 
 const (
@@ -55,6 +56,7 @@ const (
 	Vacuum
 	Cluster
 	BaseBackup
+	Copy
 )
 
 var colorTables map[string][]string = map[string][]string{
@@ -63,6 +65,7 @@ var colorTables map[string][]string = map[string][]string{
 	"pg_stat_progress_vacuum":       {"#5A56E0", "#FF7CCB"},
 	"pg_stat_progress_cluster":      {"#5A56E0", "#EE6FF8"},
 	"pg_stat_progress_basebackup":   {"#FDFF8C", "#FF7CCB"},
+	"pg_stat_progress_copy":         {"#5AF6FF", "#7CFFCB"},
 }
 
 var spin []string = []string{"|", "/", "-", "\\"}
@@ -81,6 +84,7 @@ func NewModel(db *sql.DB) Model {
 		Vacuum:      true,
 		Cluster:     true,
 		BaseBackup:  true,
+		Copy:        true,
 	}
 	return model
 }
@@ -92,6 +96,7 @@ func Targets(model *Model, t int) *Model {
 		model.Vacuum = false
 		model.Cluster = false
 		model.BaseBackup = false
+		model.Copy = false
 		if t == Analyze {
 			model.Analyze = true
 		}
@@ -106,6 +111,9 @@ func Targets(model *Model, t int) *Model {
 		}
 		if t == BaseBackup {
 			model.BaseBackup = true
+		}
+		if t == Copy {
+			model.Copy = true
 		}
 	}
 	return model
@@ -245,6 +253,17 @@ func (m *Model) addBaseBackup(ctx context.Context) error {
 	return nil
 }
 
+func (m *Model) addCopy(ctx context.Context) error {
+	copy, err := pgsp.GetCopy(ctx, m.DB)
+	if err != nil {
+		return err
+	}
+	for _, v := range copy {
+		m.pgrss = m.addProgress(m.pgrss, v)
+	}
+	return nil
+}
+
 func (m *Model) updateProgress(ctx context.Context, db *sql.DB) error {
 	if m.CreateIndex {
 		if err := m.addCreateIndex(ctx); err != nil {
@@ -278,6 +297,13 @@ func (m *Model) updateProgress(ctx context.Context, db *sql.DB) error {
 		if err := m.addBaseBackup(ctx); err != nil {
 			log.Println(err)
 			m.BaseBackup = false
+		}
+	}
+
+	if m.Copy {
+		if err := m.addCopy(ctx); err != nil {
+			log.Println(err)
+			m.Copy = false
 		}
 	}
 
