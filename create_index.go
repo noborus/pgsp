@@ -28,31 +28,21 @@ type CreateIndex struct {
 	TuplesTotal     int64  `db:"tuples_total"`
 	TuplesDone      int64  `db:"tuples_done"`
 	PartitionsTotal int64  `db:"partitions_total"`
-	PartitionsDone  int64  `db:"partitions__done"`
+	PartitionsDone  int64  `db:"partitions_done"`
 }
 
 var CreateIndexTableName = "pg_stat_progress_create_index"
 
-var CreateIndexColumns = []string{
-	"pid",
-	"datid",
-	"datname",
-	"relid",
-	"index_relid",
-	"command",
-	"phase",
-	"lockers_total",
-	"lockers_done",
-	"current_locker_pid",
-	"blocks_total",
-	"blocks_done",
-	"tuples_total",
-	"tuples_done",
-	"partitions_total",
-	"partitions_done",
-}
+var CreateIndexQuery string
+var CreateIndexColumns []string
 
 func GetCreateIndex(ctx context.Context, db *sqlx.DB) ([]CreateIndex, error) {
+	if len(CreateIndexColumns) == 0 {
+		CreateIndexColumns = getColumns(CreateIndex{})
+	}
+	if CreateIndexQuery == "" {
+		CreateIndexQuery = buildQuery(CreateIndexTableName, CreateIndexColumns)
+	}
 	query := buildQuery(CreateIndexTableName, CreateIndexColumns)
 	return selectCreateIndex(ctx, db, query)
 }
@@ -123,24 +113,7 @@ func (v CreateIndex) Vertical() string {
 	buff := new(bytes.Buffer)
 	vt := vertical.NewWriter(buff)
 	vt.SetHeader(CreateIndexColumns)
-	vt.Append([]interface{}{
-		v.PID,
-		v.DATID,
-		v.DATNAME,
-		v.RELID,
-		v.IndexRelid,
-		v.Command,
-		v.PHASE,
-		v.LockersTotal,
-		v.LockersDone,
-		v.LockersPid,
-		v.BlocksTotal,
-		v.BlocksDone,
-		v.TuplesTotal,
-		v.TuplesDone,
-		v.PartitionsTotal,
-		v.PartitionsDone,
-	})
+	vt.AppendStruct(v)
 	vt.Render()
 	return buff.String()
 }

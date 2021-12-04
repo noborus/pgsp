@@ -66,8 +66,9 @@ func TestCreateIndex_Table(t *testing.T) {
 				PartitionsTotal: tt.fields.PartitionsTotal,
 				PartitionsDone:  tt.fields.PartitionsDone,
 			}
+			CreateIndexColumns = getColumns(CreateIndex{})
 			if got := v.Table(); got != tt.want {
-				t.Errorf("CreateIndex.Table() = %v, want %v", got, tt.want)
+				t.Errorf("CreateIndex.Table() = \n%v\n, want \n%v\n", got, tt.want)
 			}
 		})
 	}

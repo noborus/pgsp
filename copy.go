@@ -25,24 +25,18 @@ type Copy struct {
 	TUPLESExcluded  int64  `db:"tuples_excluded"`
 }
 
-var CopyColumns = []string{
-	"pid",
-	"datid",
-	"datname",
-	"relid",
-	"command",
-	"type",
-	"bytes_processed",
-	"bytes_total",
-	"tuples_processed",
-	"tuples_excluded",
-}
-
 var CopyTableName = "pg_stat_progress_copy"
+var CopyQuery string
+var CopyColumns []string
 
 func GetCopy(ctx context.Context, db *sqlx.DB) ([]Copy, error) {
-	query := buildQuery(CopyTableName, CopyColumns)
-	return selectCopy(ctx, db, query)
+	if len(CopyColumns) == 0 {
+		CopyColumns = getColumns(Copy{})
+	}
+	if CopyQuery == "" {
+		CopyQuery = buildQuery(CopyTableName, CopyColumns)
+	}
+	return selectCopy(ctx, db, CopyQuery)
 }
 
 func selectCopy(ctx context.Context, db *sqlx.DB, query string) ([]Copy, error) {
@@ -103,18 +97,7 @@ func (v Copy) Vertical() string {
 	buff := new(bytes.Buffer)
 	vt := vertical.NewWriter(buff)
 	vt.SetHeader(CopyColumns)
-	vt.Append([]interface{}{
-		v.PID,
-		v.DATID,
-		v.DATNAME,
-		v.COMMAND,
-		v.RELID,
-		v.CTYPE,
-		v.BYTESProcessed,
-		v.BYTESTotal,
-		v.TUPLESProcessed,
-		v.TUPLESExcluded,
-	})
+	vt.AppendStruct(v)
 	vt.Render()
 	return buff.String()
 }

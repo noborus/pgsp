@@ -28,26 +28,18 @@ type Analyze struct {
 	CurrentChildTableRelid int    `db:"current_child_table_relid"`
 }
 
-var AnalyzeColumns = []string{
-	"pid",
-	"datid",
-	"datname",
-	"relid",
-	"phase",
-	"sample_blks_total",
-	"sample_blks_scanned",
-	"ext_stats_total",
-	"ext_stats_computed",
-	"child_tables_total",
-	"child_tables_done",
-	"current_child_table_relid",
-}
-
 var AnalyzeTableName = "pg_stat_progress_analyze"
+var AnalyzeQuery string
+var AnalyzeColumns []string
 
 func GetAnalyze(ctx context.Context, db *sqlx.DB) ([]Analyze, error) {
-	query := buildQuery(AnalyzeTableName, AnalyzeColumns)
-	return selectAnalyze(ctx, db, query)
+	if len(AnalyzeColumns) == 0 {
+		AnalyzeColumns = getColumns(Analyze{})
+	}
+	if AnalyzeQuery == "" {
+		AnalyzeQuery = buildQuery(AnalyzeTableName, AnalyzeColumns)
+	}
+	return selectAnalyze(ctx, db, AnalyzeQuery)
 }
 
 func selectAnalyze(ctx context.Context, db *sqlx.DB, query string) ([]Analyze, error) {
@@ -112,19 +104,7 @@ func (v Analyze) Vertical() string {
 	buff := new(bytes.Buffer)
 	vt := vertical.NewWriter(buff)
 	vt.SetHeader(AnalyzeColumns)
-	vt.Append([]interface{}{
-		v.PID,
-		v.DATID,
-		v.DATNAME,
-		v.RELID,
-		v.PHASE,
-		v.SampleBLKSScanned,
-		v.ExtStatsTotal,
-		v.ExtStatsComputed,
-		v.ChildTablesTotal,
-		v.ChildTablesDone,
-		v.CurrentChildTableRelid,
-	})
+	vt.AppendStruct(v)
 	vt.Render()
 	return buff.String()
 }

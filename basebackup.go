@@ -21,20 +21,18 @@ type BaseBackup struct {
 	TablespacesStreamed int64  `db:"tablespaces_streamed"`
 }
 
-var BaseBackupColumns = []string{
-	"pid",
-	"phase",
-	"backup_total",
-	"backup_streamed",
-	"tablespaces_total",
-	"tablespaces_streamed",
-}
-
 var BaseBackupTableName = "pg_stat_progress_basebackup"
+var BaseBackupQuery string
+var BaseBackupColumns []string
 
 func GetBaseBackup(ctx context.Context, db *sqlx.DB) ([]BaseBackup, error) {
-	query := buildQuery(BaseBackupTableName, BaseBackupColumns)
-	return selectBaseBackup(ctx, db, query)
+	if len(BaseBackupColumns) == 0 {
+		BaseBackupColumns = getColumns(BaseBackup{})
+	}
+	if BaseBackupQuery == "" {
+		BaseBackupQuery = buildQuery(BaseBackupTableName, BaseBackupColumns)
+	}
+	return selectBaseBackup(ctx, db, BaseBackupQuery)
 }
 
 func selectBaseBackup(ctx context.Context, db *sqlx.DB, query string) ([]BaseBackup, error) {
@@ -84,14 +82,7 @@ func (v BaseBackup) Vertical() string {
 	buff := new(bytes.Buffer)
 	vt := vertical.NewWriter(buff)
 	vt.SetHeader(BaseBackupColumns)
-	vt.Append([]interface{}{
-		v.PID,
-		v.PHASE,
-		v.BackupTotal,
-		v.BackupStreamed,
-		v.TablespacesTotal,
-		v.TablespacesStreamed,
-	})
+	vt.AppendStruct(v)
 	vt.Render()
 	return buff.String()
 }

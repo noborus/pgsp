@@ -26,23 +26,17 @@ type Vacuum struct {
 	NumDeadTuples    int64  `db:"num_dead_tuples"`
 }
 
-var VacuumColumns = []string{
-	"pid",
-	"datid",
-	"datname",
-	"relid",
-	"phase",
-	"heap_blks_total",
-	"heap_blks_scanned",
-	"heap_blks_vacuumed",
-	"index_vacuum_count",
-	"max_dead_tuples",
-	"num_dead_tuples",
-}
-
 var VacuumTableName = "pg_stat_progress_vacuum"
+var VacuumQuery string
+var VacuumColumns []string
 
 func GetVacuum(ctx context.Context, db *sqlx.DB) ([]Vacuum, error) {
+	if len(VacuumColumns) == 0 {
+		VacuumColumns = getColumns(Vacuum{})
+	}
+	if VacuumQuery == "" {
+		VacuumQuery = buildQuery(VacuumTableName, VacuumColumns)
+	}
 	query := buildQuery(VacuumTableName, VacuumColumns)
 	return selectVacuum(ctx, db, query)
 }
@@ -106,19 +100,7 @@ func (v Vacuum) Vertical() string {
 	buff := new(bytes.Buffer)
 	vt := vertical.NewWriter(buff)
 	vt.SetHeader(VacuumColumns)
-	vt.Append([]interface{}{
-		v.PID,
-		v.DATID,
-		v.DATNAME,
-		v.RELID,
-		v.PHASE,
-		v.HeapBLKSTotal,
-		v.HeapBLKSScanned,
-		v.HeapBLKSVacuumed,
-		v.IndexVacuumCount,
-		v.MaxDeadTuples,
-		v.NumDeadTuples,
-	})
+	vt.AppendStruct(v)
 	vt.Render()
 	return buff.String()
 }

@@ -3,6 +3,7 @@ package vertical
 import (
 	"fmt"
 	"io"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -40,6 +41,18 @@ func (v *Vertical) SetPadding(p int) {
 
 func (v *Vertical) SetBar(b rune) {
 	v.bar = b
+}
+
+func (v *Vertical) AppendStruct(value interface{}) {
+	rf := reflect.TypeOf(value)
+	rv := reflect.ValueOf(value)
+
+	num := rf.NumField()
+	row := make([]interface{}, num)
+	for i := 0; i < num; i++ {
+		row[i] = rv.Field(i)
+	}
+	v.rows = append(v.rows, row)
 }
 
 func (v *Vertical) Append(values []interface{}) {

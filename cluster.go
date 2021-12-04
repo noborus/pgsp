@@ -28,26 +28,18 @@ type Cluster struct {
 	IndexRebuildCount int64  `db:"index_rebuild_count"`
 }
 
-var ClusterColumns = []string{
-	"pid",
-	"datid",
-	"datname",
-	"relid",
-	"command",
-	"phase",
-	"cluster_index_relid",
-	"heap_tuples_scanned",
-	"heap_tuples_written",
-	"heap_blks_total",
-	"heap_blks_scanned",
-	"index_rebuild_count",
-}
-
 var ClusterTableName = "pg_stat_progress_cluster"
+var ClusterQuery string
+var ClusterColumns []string
 
 func GetCluster(ctx context.Context, db *sqlx.DB) ([]Cluster, error) {
-	query := buildQuery(ClusterTableName, ClusterColumns)
-	return selectCluster(ctx, db, query)
+	if len(ClusterColumns) == 0 {
+		ClusterColumns = getColumns(Cluster{})
+	}
+	if ClusterQuery == "" {
+		ClusterQuery = buildQuery(ClusterTableName, ClusterColumns)
+	}
+	return selectCluster(ctx, db, ClusterQuery)
 
 }
 
@@ -112,20 +104,7 @@ func (v Cluster) Vertical() string {
 	buff := new(bytes.Buffer)
 	vt := vertical.NewWriter(buff)
 	vt.SetHeader(ClusterColumns)
-	vt.Append([]interface{}{
-		v.PID,
-		v.DATID,
-		v.DATNAME,
-		v.RELID,
-		v.Command,
-		v.PHASE,
-		v.ClusterIndexRelid,
-		v.HeapTuplesScanned,
-		v.HeapTuplesWritten,
-		v.HeapBlksTotal,
-		v.HeapBlksScanned,
-		v.IndexRebuildCount,
-	})
+	vt.AppendStruct(v)
 	vt.Render()
 	return buff.String()
 }

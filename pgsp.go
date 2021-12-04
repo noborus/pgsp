@@ -2,6 +2,7 @@ package pgsp
 
 import (
 	"bytes"
+	"reflect"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
@@ -38,4 +39,15 @@ func buildQuery(tableName string, columns []string) string {
 	buff.WriteString(" FROM ")
 	buff.WriteString(tableName)
 	return buff.String()
+}
+
+func getColumns(s interface{}) []string {
+	t := reflect.TypeOf(s)
+	var columns []string
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		j := field.Tag.Get("db")
+		columns = append(columns, j)
+	}
+	return columns
 }

@@ -2,13 +2,11 @@ package vertical
 
 import (
 	"bytes"
-	"io"
 	"testing"
 )
 
 func TestVertical_Render(t *testing.T) {
 	type fields struct {
-		out    io.Writer
 		bar    rune
 		header []string
 		rows   [][]interface{}
@@ -54,6 +52,41 @@ b                                    | b
 				header: tt.fields.header,
 				rows:   tt.fields.rows,
 			}
+			v.Render()
+			if tt.want != writer.String() {
+				t.Errorf("Vertical.Render() not match\n[%v]\n, want \n[%v]\n", writer.String(), tt.want)
+			}
+		})
+	}
+}
+
+func TestVertical_AppendStruct(t *testing.T) {
+	type test struct {
+		a int
+		b string
+	}
+	tests := []struct {
+		name string
+		args interface{}
+		want string
+	}{
+		{
+			name: "testStruct1",
+			args: test{
+				a: 1,
+				b: "test",
+			},
+			want: ` a | 1
+ b | test
+`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			writer := new(bytes.Buffer)
+			v := NewWriter(writer)
+			v.SetHeader([]string{"a", "b"})
+			v.AppendStruct(tt.args)
 			v.Render()
 			if tt.want != writer.String() {
 				t.Errorf("Vertical.Render() not match\n[%v]\n, want \n[%v]\n", writer.String(), tt.want)

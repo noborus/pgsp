@@ -93,14 +93,6 @@ func Targets(model *Model, t int) *Model {
 		return model
 	}
 
-	/*
-		model.monitor[Analyze] = false
-		model.monitor[CreateIndex] = false
-		model.monitor[Vacuum] = false
-		model.monitor[Cluster] = false
-		model.monitor[BaseBackup] = false
-		model.monitor[Copy] = false
-	*/
 	if t == Analyze {
 		model.monitor[Analyze] = true
 	}
@@ -167,7 +159,6 @@ func (m Model) View() string {
 	status := ""
 	if Debug {
 		status = m.status
-		status += fmt.Sprintf("%#v", m.monitor[Copy])
 		status += "\n"
 	}
 	s := "quit: q, ctrl+c, esc\n"
@@ -266,7 +257,6 @@ func (m *Model) addBaseBackup(ctx context.Context) error {
 func (m *Model) addCopy(ctx context.Context) error {
 	copy, err := pgsp.GetCopy(ctx, m.DB)
 	if err != nil {
-		m.status = err.Error()
 		return err
 	}
 	for _, v := range copy {
@@ -278,7 +268,7 @@ func (m *Model) addCopy(ctx context.Context) error {
 func (m *Model) updateProgress(ctx context.Context, db *sqlx.DB) error {
 	if m.monitor[CreateIndex] {
 		if err := m.addCreateIndex(ctx); err != nil {
-			log.Println(err)
+			m.status = err.Error()
 			m.monitor[CreateIndex] = false
 		}
 	}
@@ -317,13 +307,7 @@ func (m *Model) updateProgress(ctx context.Context, db *sqlx.DB) error {
 			m.monitor[Copy] = false
 		}
 	}
-	/*
-		status := ""
-		for _, v := range m.monitor {
-			status += fmt.Sprintf("%#v ", v)
-		}
-		m.status = status
-	*/
+
 	pgrss := make([]pgrs, 0, len(m.pgrss))
 	for _, pgrs := range m.pgrss {
 		if time.Since(pgrs.time) < time.Second*AfterCompletion {
