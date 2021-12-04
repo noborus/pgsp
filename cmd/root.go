@@ -29,6 +29,7 @@ type Config struct {
 
 var (
 	verFlag bool
+	debug   bool
 )
 
 var (
@@ -72,6 +73,7 @@ func Progress(targets int) {
 func setConfig() {
 	tui.AfterCompletion = time.Duration(config.AfterCompletion)
 	tui.UpdateInterval = time.Duration(time.Millisecond * time.Duration(config.Interval*1000))
+	tui.Debug = debug
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -94,6 +96,8 @@ func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 
 	rootCmd.PersistentFlags().BoolVarP(&verFlag, "version", "v", false, "display version information")
+
+	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "", false, "debug message for toggle")
 
 	var dsn string
 	rootCmd.PersistentFlags().StringVar(&dsn, "dsn", "", "PostgreSQL data source name")

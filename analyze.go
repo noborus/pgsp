@@ -3,9 +3,9 @@ package pgsp
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"strconv"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/noborus/pgsp/vertical"
 
@@ -45,13 +45,13 @@ var AnalyzeColumns = []string{
 
 var AnalyzeTableName = "pg_stat_progress_analyze"
 
-func GetAnalyze(ctx context.Context, db *sql.DB) ([]Analyze, error) {
+func GetAnalyze(ctx context.Context, db *sqlx.DB) ([]Analyze, error) {
 	query := buildQuery(AnalyzeTableName, AnalyzeColumns)
 	return selectAnalyze(ctx, db, query)
 }
 
-func selectAnalyze(ctx context.Context, db *sql.DB, query string) ([]Analyze, error) {
-	rows, err := db.QueryContext(ctx, query)
+func selectAnalyze(ctx context.Context, db *sqlx.DB, query string) ([]Analyze, error) {
+	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -60,20 +60,7 @@ func selectAnalyze(ctx context.Context, db *sql.DB, query string) ([]Analyze, er
 	var as []Analyze
 	for rows.Next() {
 		var row Analyze
-		err = rows.Scan(
-			&row.PID,
-			&row.DATID,
-			&row.DATNAME,
-			&row.RELID,
-			&row.PHASE,
-			&row.SampleBLKSTotal,
-			&row.SampleBLKSScanned,
-			&row.ExtStatsTotal,
-			&row.ExtStatsComputed,
-			&row.ChildTablesTotal,
-			&row.ChildTablesDone,
-			&row.CurrentChildTableRelid,
-		)
+		err = rows.StructScan(&row)
 		if err != nil {
 			return nil, err
 		}

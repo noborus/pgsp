@@ -1,5 +1,7 @@
 # pgsp - PostgreSQL Stat Progress CLI Monitor
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/noborus/pgsp.svg)](https://pkg.go.dev/github.com/noborus/pgsp)
+
 A CUI tool that monitors PostgreSQL's pg_stat_progress*.
 
 Supported progress reports are ANALYZE, CLUSTER, CREATE INDEX, VACUUM, COPY, and BASE_BACKUP.
@@ -25,10 +27,10 @@ go install github.com/noborus/pgsp/cmd/pgsp@latest
 
 ## Usage
 
-Shows a progress bar if pg_stat_progress * is updated while waiting while running.
+Shows a progress bar if pg_stat_progress* is updated while waiting while running.
 
 ```console
-$ pgsp --dsn 'host=/var/run/postgresql'
+$ pgsp --dsn 'host=/var/run/postgresql port=5432'
 Using config file: /home/noborus/.pgsp.yaml
 quit: q, ctrl+c, esc
 pg_stat_progress_basebackup
@@ -42,7 +44,7 @@ pg_stat_progress_basebackup
 █████████████████████████░░░░░░░░░░░░░░░░░░  56%
 ```
 
-It is also possible to specify one of the `analyze`, `basebackup`, `cluster`, `copy`, `createindex`, `vacuums` for monitoring.
+It is also possible to specify one of the `analyze`, `basebackup`, `cluster`, `createindex`, `vacuums`, `copy` for monitoring.
 
 ```console
 pgsp basebackup

@@ -3,9 +3,9 @@ package pgsp
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"strconv"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/noborus/pgsp/vertical"
 	"github.com/olekukonko/tablewriter"
@@ -42,13 +42,13 @@ var VacuumColumns = []string{
 
 var VacuumTableName = "pg_stat_progress_vacuum"
 
-func GetVacuum(ctx context.Context, db *sql.DB) ([]Vacuum, error) {
+func GetVacuum(ctx context.Context, db *sqlx.DB) ([]Vacuum, error) {
 	query := buildQuery(VacuumTableName, VacuumColumns)
 	return selectVacuum(ctx, db, query)
 }
 
-func selectVacuum(ctx context.Context, db *sql.DB, query string) ([]Vacuum, error) {
-	rows, err := db.QueryContext(ctx, query)
+func selectVacuum(ctx context.Context, db *sqlx.DB, query string) ([]Vacuum, error) {
+	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -57,19 +57,7 @@ func selectVacuum(ctx context.Context, db *sql.DB, query string) ([]Vacuum, erro
 	var as []Vacuum
 	for rows.Next() {
 		var row Vacuum
-		err = rows.Scan(
-			&row.PID,
-			&row.DATID,
-			&row.DATNAME,
-			&row.RELID,
-			&row.PHASE,
-			&row.HeapBLKSTotal,
-			&row.HeapBLKSScanned,
-			&row.HeapBLKSVacuumed,
-			&row.IndexVacuumCount,
-			&row.MaxDeadTuples,
-			&row.NumDeadTuples,
-		)
+		err = rows.StructScan(&row)
 		if err != nil {
 			return nil, err
 		}

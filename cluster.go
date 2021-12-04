@@ -3,9 +3,9 @@ package pgsp
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"strconv"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/noborus/pgsp/vertical"
 
@@ -45,14 +45,14 @@ var ClusterColumns = []string{
 
 var ClusterTableName = "pg_stat_progress_cluster"
 
-func GetCluster(ctx context.Context, db *sql.DB) ([]Cluster, error) {
+func GetCluster(ctx context.Context, db *sqlx.DB) ([]Cluster, error) {
 	query := buildQuery(ClusterTableName, ClusterColumns)
 	return selectCluster(ctx, db, query)
 
 }
 
-func selectCluster(ctx context.Context, db *sql.DB, query string) ([]Cluster, error) {
-	rows, err := db.QueryContext(ctx, query)
+func selectCluster(ctx context.Context, db *sqlx.DB, query string) ([]Cluster, error) {
+	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -61,20 +61,7 @@ func selectCluster(ctx context.Context, db *sql.DB, query string) ([]Cluster, er
 	var as []Cluster
 	for rows.Next() {
 		var row Cluster
-		err = rows.Scan(
-			&row.PID,
-			&row.DATID,
-			&row.DATNAME,
-			&row.RELID,
-			&row.Command,
-			&row.PHASE,
-			&row.ClusterIndexRelid,
-			&row.HeapTuplesScanned,
-			&row.HeapTuplesWritten,
-			&row.HeapBlksTotal,
-			&row.HeapBlksScanned,
-			&row.IndexRebuildCount,
-		)
+		err = rows.StructScan(&row)
 		if err != nil {
 			return nil, err
 		}

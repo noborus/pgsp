@@ -2,9 +2,9 @@ package pgsp
 
 import (
 	"bytes"
-	"database/sql"
 	"strings"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
@@ -16,8 +16,8 @@ type PGSProgress interface {
 	Progress() float64
 }
 
-func Connect(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("postgres", dsn)
+func Connect(dsn string) (*sqlx.DB, error) {
+	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func Connect(dsn string) (*sql.DB, error) {
 	return db, nil
 }
 
-func DisConnect(db *sql.DB) error {
+func DisConnect(db *sqlx.DB) error {
 	return db.Close()
 }
 

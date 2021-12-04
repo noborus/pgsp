@@ -3,9 +3,9 @@ package pgsp
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"strconv"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/noborus/pgsp/vertical"
 	"github.com/olekukonko/tablewriter"
@@ -52,13 +52,13 @@ var CreateIndexColumns = []string{
 	"partitions_done",
 }
 
-func GetCreateIndex(ctx context.Context, db *sql.DB) ([]CreateIndex, error) {
+func GetCreateIndex(ctx context.Context, db *sqlx.DB) ([]CreateIndex, error) {
 	query := buildQuery(CreateIndexTableName, CreateIndexColumns)
 	return selectCreateIndex(ctx, db, query)
 }
 
-func selectCreateIndex(ctx context.Context, db *sql.DB, query string) ([]CreateIndex, error) {
-	rows, err := db.QueryContext(ctx, query)
+func selectCreateIndex(ctx context.Context, db *sqlx.DB, query string) ([]CreateIndex, error) {
+	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -67,23 +67,7 @@ func selectCreateIndex(ctx context.Context, db *sql.DB, query string) ([]CreateI
 	var as []CreateIndex
 	for rows.Next() {
 		var row CreateIndex
-		err = rows.Scan(
-			&row.PID,
-			&row.DATID,
-			&row.DATNAME,
-			&row.RELID,
-			&row.IndexRelid,
-			&row.Command,
-			&row.PHASE,
-			&row.LockersTotal,
-			&row.LockersDone,
-			&row.LockersPid,
-			&row.BlocksTotal,
-			&row.BlocksDone,
-			&row.TuplesTotal,
-			&row.TuplesDone,
-			&row.PartitionsTotal,
-			&row.PartitionsDone)
+		err = rows.StructScan(&row)
 		if err != nil {
 			return nil, err
 		}

@@ -3,9 +3,9 @@ package pgsp
 import (
 	"bytes"
 	"context"
-	"database/sql"
 	"strconv"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/noborus/pgsp/vertical"
 	"github.com/olekukonko/tablewriter"
@@ -32,13 +32,13 @@ var BaseBackupColumns = []string{
 
 var BaseBackupTableName = "pg_stat_progress_basebackup"
 
-func GetBaseBackup(ctx context.Context, db *sql.DB) ([]BaseBackup, error) {
+func GetBaseBackup(ctx context.Context, db *sqlx.DB) ([]BaseBackup, error) {
 	query := buildQuery(BaseBackupTableName, BaseBackupColumns)
 	return selectBaseBackup(ctx, db, query)
 }
 
-func selectBaseBackup(ctx context.Context, db *sql.DB, query string) ([]BaseBackup, error) {
-	rows, err := db.QueryContext(ctx, query)
+func selectBaseBackup(ctx context.Context, db *sqlx.DB, query string) ([]BaseBackup, error) {
+	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -47,14 +47,7 @@ func selectBaseBackup(ctx context.Context, db *sql.DB, query string) ([]BaseBack
 	var as []BaseBackup
 	for rows.Next() {
 		var row BaseBackup
-		err = rows.Scan(
-			&row.PID,
-			&row.PHASE,
-			&row.BackupTotal,
-			&row.BackupStreamed,
-			&row.TablespacesTotal,
-			&row.TablespacesStreamed,
-		)
+		err = rows.StructScan(&row)
 		if err != nil {
 			return nil, err
 		}

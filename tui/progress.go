@@ -2,7 +2,6 @@ package tui
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/jmoiron/sqlx"
 	"github.com/noborus/pgsp"
 )
 
@@ -20,6 +20,8 @@ var (
 	MinimumTableWidth int = 120
 	MaxVerticalRows   int = 15
 )
+
+var Debug = false
 
 type tickMsg time.Time
 
@@ -36,17 +38,13 @@ type pgrs struct {
 }
 
 type Model struct {
-	DB          *sql.DB
-	spinC       int
-	pgrss       []pgrs
-	width       int
-	height      int
-	CreateIndex bool
-	Vacuum      bool
-	Analyze     bool
-	Cluster     bool
-	BaseBackup  bool
-	Copy        bool
+	DB      *sqlx.DB
+	spinC   int
+	pgrss   []pgrs
+	width   int
+	height  int
+	monitor map[int]bool
+	status  string
 }
 
 const (
@@ -76,45 +74,50 @@ func (m Model) Init() tea.Cmd {
 
 type Option func(*Model) error
 
-func NewModel(db *sql.DB) Model {
+func NewModel(db *sqlx.DB) Model {
 	model := Model{
-		DB:          db,
-		Analyze:     true,
-		CreateIndex: true,
-		Vacuum:      true,
-		Cluster:     true,
-		BaseBackup:  true,
-		Copy:        true,
+		DB:      db,
+		monitor: map[int]bool{},
 	}
 	return model
 }
 
 func Targets(model *Model, t int) *Model {
-	if t != All {
-		model.Analyze = false
-		model.CreateIndex = false
-		model.Vacuum = false
-		model.Cluster = false
-		model.BaseBackup = false
-		model.Copy = false
-		if t == Analyze {
-			model.Analyze = true
-		}
-		if t == CreateIndex {
-			model.CreateIndex = true
-		}
-		if t == Vacuum {
-			model.Vacuum = true
-		}
-		if t == Cluster {
-			model.Cluster = true
-		}
-		if t == BaseBackup {
-			model.BaseBackup = true
-		}
-		if t == Copy {
-			model.Copy = true
-		}
+	if t == All {
+		model.monitor[Analyze] = true
+		model.monitor[CreateIndex] = true
+		model.monitor[Vacuum] = true
+		model.monitor[Cluster] = true
+		model.monitor[BaseBackup] = true
+		model.monitor[Copy] = true
+		return model
+	}
+
+	/*
+		model.monitor[Analyze] = false
+		model.monitor[CreateIndex] = false
+		model.monitor[Vacuum] = false
+		model.monitor[Cluster] = false
+		model.monitor[BaseBackup] = false
+		model.monitor[Copy] = false
+	*/
+	if t == Analyze {
+		model.monitor[Analyze] = true
+	}
+	if t == CreateIndex {
+		model.monitor[CreateIndex] = true
+	}
+	if t == Vacuum {
+		model.monitor[Vacuum] = true
+	}
+	if t == Cluster {
+		model.monitor[Cluster] = true
+	}
+	if t == BaseBackup {
+		model.monitor[BaseBackup] = true
+	}
+	if t == Copy {
+		model.monitor[Copy] = true
 	}
 	return model
 }
@@ -161,12 +164,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
+	status := ""
+	if Debug {
+		status = m.status
+		status += fmt.Sprintf("%#v", m.monitor[Copy])
+		status += "\n"
+	}
 	s := "quit: q, ctrl+c, esc\n"
 	num := len(m.pgrss)
 	if num == 0 {
 		s = spin[m.spinC] + " " + s
-		return s
+		return status + s
 	}
+
 	var style = lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("#FAFAFA")).
@@ -195,7 +205,7 @@ func (m Model) View() string {
 			}
 		}
 	}
-	return s
+	return status + s
 }
 
 func (m *Model) addCreateIndex(ctx context.Context) error {
@@ -256,6 +266,7 @@ func (m *Model) addBaseBackup(ctx context.Context) error {
 func (m *Model) addCopy(ctx context.Context) error {
 	copy, err := pgsp.GetCopy(ctx, m.DB)
 	if err != nil {
+		m.status = err.Error()
 		return err
 	}
 	for _, v := range copy {
@@ -264,49 +275,55 @@ func (m *Model) addCopy(ctx context.Context) error {
 	return nil
 }
 
-func (m *Model) updateProgress(ctx context.Context, db *sql.DB) error {
-	if m.CreateIndex {
+func (m *Model) updateProgress(ctx context.Context, db *sqlx.DB) error {
+	if m.monitor[CreateIndex] {
 		if err := m.addCreateIndex(ctx); err != nil {
 			log.Println(err)
-			m.CreateIndex = false
+			m.monitor[CreateIndex] = false
 		}
 	}
 
-	if m.Vacuum {
+	if m.monitor[Vacuum] {
 		if err := m.addVacuum(ctx); err != nil {
-			log.Println(err)
-			m.Vacuum = false
+			m.status = err.Error()
+			m.monitor[Vacuum] = false
 		}
 	}
 
-	if m.Analyze {
+	if m.monitor[Analyze] {
 		if err := m.addAnalyze(ctx); err != nil {
-			log.Println(err)
-			m.Analyze = false
+			m.status = err.Error()
+			m.monitor[Analyze] = false
 		}
 	}
 
-	if m.Cluster {
+	if m.monitor[Cluster] {
 		if err := m.addCluster(ctx); err != nil {
-			log.Println(err)
-			m.Cluster = false
+			m.status = err.Error()
+			m.monitor[Cluster] = false
 		}
 	}
 
-	if m.BaseBackup {
+	if m.monitor[BaseBackup] {
 		if err := m.addBaseBackup(ctx); err != nil {
-			log.Println(err)
-			m.BaseBackup = false
+			m.status = err.Error()
+			m.monitor[BaseBackup] = false
 		}
 	}
 
-	if m.Copy {
+	if m.monitor[Copy] {
 		if err := m.addCopy(ctx); err != nil {
-			log.Println(err)
-			m.Copy = false
+			m.status = err.Error()
+			m.monitor[Copy] = false
 		}
 	}
-
+	/*
+		status := ""
+		for _, v := range m.monitor {
+			status += fmt.Sprintf("%#v ", v)
+		}
+		m.status = status
+	*/
 	pgrss := make([]pgrs, 0, len(m.pgrss))
 	for _, pgrs := range m.pgrss {
 		if time.Since(pgrs.time) < time.Second*AfterCompletion {

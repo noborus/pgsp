@@ -3,10 +3,9 @@ package pgsp
 import (
 	"bytes"
 	"context"
-	"database/sql"
-	"log"
 	"strconv"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/noborus/pgsp/vertical"
 	"github.com/olekukonko/tablewriter"
@@ -41,15 +40,14 @@ var CopyColumns = []string{
 
 var CopyTableName = "pg_stat_progress_copy"
 
-func GetCopy(ctx context.Context, db *sql.DB) ([]Copy, error) {
+func GetCopy(ctx context.Context, db *sqlx.DB) ([]Copy, error) {
 	query := buildQuery(CopyTableName, CopyColumns)
 	return selectCopy(ctx, db, query)
 }
 
-func selectCopy(ctx context.Context, db *sql.DB, query string) ([]Copy, error) {
-	rows, err := db.QueryContext(ctx, query)
+func selectCopy(ctx context.Context, db *sqlx.DB, query string) ([]Copy, error) {
+	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
-		log.Println(err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -57,18 +55,7 @@ func selectCopy(ctx context.Context, db *sql.DB, query string) ([]Copy, error) {
 	var as []Copy
 	for rows.Next() {
 		var row Copy
-		err = rows.Scan(
-			&row.PID,
-			&row.DATID,
-			&row.DATNAME,
-			&row.RELID,
-			&row.COMMAND,
-			&row.CTYPE,
-			&row.BYTESProcessed,
-			&row.BYTESTotal,
-			&row.TUPLESProcessed,
-			&row.TUPLESExcluded,
-		)
+		err = rows.StructScan(&row)
 		if err != nil {
 			return nil, err
 		}
