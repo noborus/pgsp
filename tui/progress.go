@@ -157,7 +157,7 @@ func (m Model) View() string {
 }
 
 func (m *Model) updateProgress(ctx context.Context) error {
-	m.status = pgsp.TargetString(m.monitor)
+	m.status = fmt.Sprintf("Monitor: %s\n", pgsp.TargetString(m.monitor))
 
 	for _, table := range m.monitor {
 		result, err := table.Get(ctx, m.db)

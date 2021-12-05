@@ -99,15 +99,20 @@ func getColumns(s interface{}) []string {
 
 func Targets(sp StatProgress, target []string) StatProgress {
 	if len(target) != 0 {
+		enableF := false
 		for _, t := range target {
 			if v, ok := sp[SPTaget(t)]; ok {
+				enableF = true
 				v.Enable = true
 			}
 		}
-		return sp
+		// Return if there is even one target.
+		if enableF {
+			return sp
+		}
 	}
 
-	// Target everything.
+	// All targets.
 	for _, v := range sp {
 		v.Enable = true
 	}
