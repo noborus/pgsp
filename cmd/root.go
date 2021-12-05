@@ -48,11 +48,11 @@ var rootCmd = &cobra.Command{
 `,
 	Version: Version + " rev:" + Revision,
 	Run: func(cmd *cobra.Command, args []string) {
-		Progress(tui.All)
+		Progress(args)
 	},
 }
 
-func Progress(targets int) {
+func Progress(targets []string) {
 	setConfig()
 	db, err := pgsp.Connect(config.DSN)
 	if err != nil {
@@ -69,7 +69,7 @@ func Progress(targets int) {
 		defer f.Close()
 	}
 	model := tui.NewModel(db)
-	tui.Targets(&model, targets)
+	tui.Targets(&model, targets...)
 
 	p := tui.NewProgram(model, config.FullScreen)
 	tui.DebugLog("Start")

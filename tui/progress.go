@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/progress"
@@ -45,7 +47,6 @@ func tickCmd() tea.Cmd {
 
 type MonitorTable struct {
 	enable  bool
-	name    string
 	getFunc func(ctx context.Context, db *sqlx.DB) ([]pgsp.PGSProgress, error)
 }
 
@@ -65,16 +66,15 @@ type Model struct {
 	status  string
 }
 
-type MonitorTaget int
+type MonitorTaget string
 
 const (
-	All     = -1
-	Analyze = iota
-	CreateIndex
-	Vacuum
-	Cluster
-	BaseBackup
-	Copy
+	Analyze     = "Analyze"
+	CreateIndex = "CreateIndex"
+	Vacuum      = "Vacuum"
+	Cluster     = "Cluster"
+	BaseBackup  = "BaseBackup"
+	Copy        = "Copy"
 )
 
 var spin []string = []string{"|", "/", "-", "\\"}
@@ -86,47 +86,41 @@ func (m Model) Init() tea.Cmd {
 type Option func(*Model) error
 
 func NewModel(db *sqlx.DB) Model {
-	monitor := make(map[MonitorTaget]*MonitorTable)
+	monitor := map[MonitorTaget]*MonitorTable{
+		Analyze: {
+			getFunc: pgsp.GetAnalyze,
+		},
+		CreateIndex: {
+			getFunc: pgsp.GetCreateIndex,
+		},
+		Vacuum: {
+			getFunc: pgsp.GetVacuum,
+		},
+		Cluster: {
+			getFunc: pgsp.GetCluster,
+		},
+		BaseBackup: {
+			getFunc: pgsp.GetBaseBackup,
+		},
+		Copy: {
+			getFunc: pgsp.GetCopy,
+		},
+	}
 	model := Model{
 		DB:      db,
 		Monitor: monitor,
 	}
-	monitor[Analyze] = &MonitorTable{
-		name:    "Analyze",
-		getFunc: pgsp.GetAnalyze,
-	}
-	monitor[CreateIndex] = &MonitorTable{
-		name:    "CreateIndex",
-		getFunc: pgsp.GetCreateIndex,
-	}
-	monitor[Vacuum] = &MonitorTable{
-		name:    "Vacuum",
-		getFunc: pgsp.GetVacuum,
-	}
-	monitor[Cluster] = &MonitorTable{
-		name:    "Cluster",
-		getFunc: pgsp.GetCluster,
-	}
-	monitor[BaseBackup] = &MonitorTable{
-		name:    "BaseBackup",
-		getFunc: pgsp.GetBaseBackup,
-	}
-	monitor[Copy] = &MonitorTable{
-		name:    "Copy",
-		getFunc: pgsp.GetCopy,
-	}
 	return model
 }
 
-func Targets(m *Model, t int) *Model {
-	for _, v := range m.Monitor {
-		DebugLogf("%s:%v", v.name, v.enable)
-	}
-	if t != All {
-		if v, ok := m.Monitor[MonitorTaget(t)]; ok {
-			v.enable = true
-			return m
+func Targets(m *Model, target ...string) *Model {
+	if len(target) != 0 {
+		for _, t := range target {
+			if v, ok := m.Monitor[MonitorTaget(t)]; ok {
+				v.enable = true
+			}
 		}
+		return m
 	}
 	for _, v := range m.Monitor {
 		v.enable = true
@@ -176,16 +170,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	status := ""
-	if Debug {
-		status = m.status
-		status += "\n"
-	}
-	s := "quit: q, ctrl+c, esc\n"
+	s := m.status
+	s += "quit: q, ctrl+c, esc\n"
 	num := len(m.pgrss)
 	if num == 0 {
 		s = spin[m.spinC] + " " + s
-		return status + s
+		return s
 	}
 
 	var style = lipgloss.NewStyle().
@@ -216,15 +206,24 @@ func (m Model) View() string {
 			}
 		}
 	}
-	return status + s
+	return s
 }
 
 func (m *Model) updateProgress(ctx context.Context, db *sqlx.DB) error {
+	var ms []string
+	for n, v := range m.Monitor {
+		if v.enable {
+			ms = append(ms, string(n))
+		}
+	}
+	sort.Strings(ms)
+	m.status = fmt.Sprintf("Monitor: %s\n", strings.Join(ms, " "))
+
 	for _, v := range m.Monitor {
 		result, err := v.getFunc(ctx, m.DB)
 		if err != nil {
 			DebugLog(err)
-			m.status = err.Error()
+			m.status += err.Error()
 		}
 		for _, v := range result {
 			m.pgrss = m.addProgress(m.pgrss, v)
