@@ -37,7 +37,7 @@ var CreateIndexTableName = "pg_stat_progress_create_index"
 var CreateIndexQuery string
 var CreateIndexColumns []string
 
-func GetCreateIndex(ctx context.Context, db *sqlx.DB) ([]CreateIndex, error) {
+func GetCreateIndex(ctx context.Context, db *sqlx.DB) ([]PGSProgress, error) {
 	if len(CreateIndexColumns) == 0 {
 		CreateIndexColumns = getColumns(CreateIndex{})
 	}
@@ -49,14 +49,14 @@ func GetCreateIndex(ctx context.Context, db *sqlx.DB) ([]CreateIndex, error) {
 	return selectCreateIndex(ctx, db, query)
 }
 
-func selectCreateIndex(ctx context.Context, db *sqlx.DB, query string) ([]CreateIndex, error) {
+func selectCreateIndex(ctx context.Context, db *sqlx.DB, query string) ([]PGSProgress, error) {
 	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var as []CreateIndex
+	var as []PGSProgress
 	for rows.Next() {
 		var row CreateIndex
 		err = rows.StructScan(&row)
@@ -74,6 +74,10 @@ func (v CreateIndex) Name() string {
 
 func (v CreateIndex) Pid() int {
 	return v.PID
+}
+
+func (v CreateIndex) Color() (string, string) {
+	return "#EE6FF8", "#5A56E0"
 }
 
 func (v CreateIndex) Table() string {

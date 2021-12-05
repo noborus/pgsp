@@ -31,6 +31,12 @@ func tickCmd() tea.Cmd {
 	})
 }
 
+type MonitorTable struct {
+	enable  bool
+	name    string
+	getFunc func(ctx context.Context, db *sqlx.DB) ([]pgsp.PGSProgress, error)
+}
+
 type pgrs struct {
 	time time.Time
 	v    pgsp.PGSProgress
@@ -43,28 +49,21 @@ type Model struct {
 	pgrss   []pgrs
 	width   int
 	height  int
-	monitor map[int]bool
+	Monitor map[MonitorTaget]*MonitorTable
 	status  string
 }
 
+type MonitorTaget int
+
 const (
-	All = iota
-	Analyze
+	All     = -1
+	Analyze = iota
 	CreateIndex
 	Vacuum
 	Cluster
 	BaseBackup
 	Copy
 )
-
-var colorTables map[string][]string = map[string][]string{
-	"pg_stat_progress_analyze":      {"#FF7CCB", "#FDFF8C"},
-	"pg_stat_progress_create_index": {"#EE6FF8", "#5A56E0"},
-	"pg_stat_progress_vacuum":       {"#5A56E0", "#FF7CCB"},
-	"pg_stat_progress_cluster":      {"#5A56E0", "#EE6FF8"},
-	"pg_stat_progress_basebackup":   {"#FDFF8C", "#FF7CCB"},
-	"pg_stat_progress_copy":         {"#5AF6FF", "#7CFFCB"},
-}
 
 var spin []string = []string{"|", "/", "-", "\\"}
 
@@ -75,43 +74,52 @@ func (m Model) Init() tea.Cmd {
 type Option func(*Model) error
 
 func NewModel(db *sqlx.DB) Model {
+	monitor := make(map[MonitorTaget]*MonitorTable)
 	model := Model{
 		DB:      db,
-		monitor: map[int]bool{},
+		Monitor: monitor,
+	}
+	monitor[Analyze] = &MonitorTable{
+		name:    "Analyze",
+		getFunc: pgsp.GetAnalyze,
+	}
+	monitor[CreateIndex] = &MonitorTable{
+		name:    "CreateIndex",
+		getFunc: pgsp.GetCreateIndex,
+	}
+	monitor[Vacuum] = &MonitorTable{
+		name:    "Vacuum",
+		getFunc: pgsp.GetVacuum,
+	}
+	monitor[Cluster] = &MonitorTable{
+		name:    "Cluster",
+		getFunc: pgsp.GetCluster,
+	}
+	monitor[BaseBackup] = &MonitorTable{
+		name:    "BaseBackup",
+		getFunc: pgsp.GetBaseBackup,
+	}
+	monitor[Copy] = &MonitorTable{
+		name:    "Copy",
+		getFunc: pgsp.GetCopy,
 	}
 	return model
 }
 
-func Targets(model *Model, t int) *Model {
-	if t == All {
-		model.monitor[Analyze] = true
-		model.monitor[CreateIndex] = true
-		model.monitor[Vacuum] = true
-		model.monitor[Cluster] = true
-		model.monitor[BaseBackup] = true
-		model.monitor[Copy] = true
-		return model
+func Targets(m *Model, t int) *Model {
+	for _, v := range m.Monitor {
+		log.Printf("%s:%v", v.name, v.enable)
 	}
-
-	if t == Analyze {
-		model.monitor[Analyze] = true
+	if t != All {
+		if v, ok := m.Monitor[MonitorTaget(t)]; ok {
+			v.enable = true
+			return m
+		}
 	}
-	if t == CreateIndex {
-		model.monitor[CreateIndex] = true
+	for _, v := range m.Monitor {
+		v.enable = true
 	}
-	if t == Vacuum {
-		model.monitor[Vacuum] = true
-	}
-	if t == Cluster {
-		model.monitor[Cluster] = true
-	}
-	if t == BaseBackup {
-		model.monitor[BaseBackup] = true
-	}
-	if t == Copy {
-		model.monitor[Copy] = true
-	}
-	return model
+	return m
 }
 
 func NewProgram(m Model, fullScreen bool) *tea.Program {
@@ -199,118 +207,15 @@ func (m Model) View() string {
 	return status + s
 }
 
-func (m *Model) addCreateIndex(ctx context.Context) error {
-	cindex, err := pgsp.GetCreateIndex(ctx, m.DB)
-	if err != nil {
-		return err
-	}
-	for _, v := range cindex {
-		m.pgrss = m.addProgress(m.pgrss, v)
-	}
-	return nil
-}
-
-func (m *Model) addVacuum(ctx context.Context) error {
-	vacuum, err := pgsp.GetVacuum(ctx, m.DB)
-	if err != nil {
-		return err
-	}
-	for _, v := range vacuum {
-		m.pgrss = m.addProgress(m.pgrss, v)
-	}
-	return nil
-}
-
-func (m *Model) addAnalyze(ctx context.Context) error {
-	analyze, err := pgsp.GetAnalyze(ctx, m.DB)
-	if err != nil {
-		return err
-	}
-	for _, v := range analyze {
-		m.pgrss = m.addProgress(m.pgrss, v)
-	}
-	return nil
-}
-
-func (m *Model) addCluster(ctx context.Context) error {
-	cluster, err := pgsp.GetCluster(ctx, m.DB)
-	if err != nil {
-		return err
-	}
-	for _, v := range cluster {
-		m.pgrss = m.addProgress(m.pgrss, v)
-	}
-	return nil
-}
-
-func (m *Model) addBaseBackup(ctx context.Context) error {
-	backup, err := pgsp.GetBaseBackup(ctx, m.DB)
-	if err != nil {
-		return err
-	}
-	for _, v := range backup {
-		m.pgrss = m.addProgress(m.pgrss, v)
-	}
-	return nil
-}
-
-func (m *Model) addCopy(ctx context.Context) error {
-	copy, err := pgsp.GetCopy(ctx, m.DB)
-	if err != nil {
-		return err
-	}
-	for _, v := range copy {
-		m.pgrss = m.addProgress(m.pgrss, v)
-	}
-	return nil
-}
-
 func (m *Model) updateProgress(ctx context.Context, db *sqlx.DB) error {
-	if m.monitor[CreateIndex] {
-		if err := m.addCreateIndex(ctx); err != nil {
+	for _, v := range m.Monitor {
+		result, err := v.getFunc(ctx, m.DB)
+		if err != nil {
 			log.Println(err)
 			m.status = err.Error()
-			m.monitor[CreateIndex] = false
 		}
-	}
-
-	if m.monitor[Vacuum] {
-		if err := m.addVacuum(ctx); err != nil {
-			log.Println(err)
-			m.status = err.Error()
-			m.monitor[Vacuum] = false
-		}
-	}
-
-	if m.monitor[Analyze] {
-		if err := m.addAnalyze(ctx); err != nil {
-			log.Println(err)
-			m.status = err.Error()
-			m.monitor[Analyze] = false
-		}
-	}
-
-	if m.monitor[Cluster] {
-		if err := m.addCluster(ctx); err != nil {
-			log.Println(err)
-			m.status = err.Error()
-			m.monitor[Cluster] = false
-		}
-	}
-
-	if m.monitor[BaseBackup] {
-		if err := m.addBaseBackup(ctx); err != nil {
-			log.Println(err)
-			m.status = err.Error()
-			m.monitor[BaseBackup] = false
-		}
-	}
-
-	if m.monitor[Copy] {
-		if err := m.addCopy(ctx); err != nil {
-			log.Println(err)
-			m.status = err.Error()
-			m.monitor[Copy] = false
+		for _, v := range result {
+			m.pgrss = m.addProgress(m.pgrss, v)
 		}
 	}
 
@@ -332,9 +237,9 @@ func (m Model) addProgress(pgrss []pgrs, v pgsp.PGSProgress) []pgrs {
 			return pgrss
 		}
 	}
-	c := colorTables[v.Name()]
+
 	pg, err := progress.NewModel(
-		progress.WithScaledGradient(c[0], c[1]),
+		progress.WithScaledGradient(v.Color()),
 		progress.WithWidth(m.width-RightMargin),
 	)
 	if err != nil {

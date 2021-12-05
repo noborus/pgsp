@@ -31,7 +31,7 @@ var VacuumTableName = "pg_stat_progress_vacuum"
 var VacuumQuery string
 var VacuumColumns []string
 
-func GetVacuum(ctx context.Context, db *sqlx.DB) ([]Vacuum, error) {
+func GetVacuum(ctx context.Context, db *sqlx.DB) ([]PGSProgress, error) {
 	if len(VacuumColumns) == 0 {
 		VacuumColumns = getColumns(Vacuum{})
 	}
@@ -43,14 +43,14 @@ func GetVacuum(ctx context.Context, db *sqlx.DB) ([]Vacuum, error) {
 	return selectVacuum(ctx, db, query)
 }
 
-func selectVacuum(ctx context.Context, db *sqlx.DB, query string) ([]Vacuum, error) {
+func selectVacuum(ctx context.Context, db *sqlx.DB, query string) ([]PGSProgress, error) {
 	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var as []Vacuum
+	var as []PGSProgress
 	for rows.Next() {
 		var row Vacuum
 		err = rows.StructScan(&row)
@@ -68,6 +68,10 @@ func (v Vacuum) Name() string {
 
 func (v Vacuum) Pid() int {
 	return v.PID
+}
+
+func (v Vacuum) Color() (string, string) {
+	return "#5A56E0", "#FF7CCB"
 }
 
 func (v Vacuum) Table() string {

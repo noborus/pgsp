@@ -12,6 +12,7 @@ import (
 type PGSProgress interface {
 	Name() string
 	Pid() int
+	Color() (string, string)
 	Table() string
 	Vertical() string
 	Progress() float64
