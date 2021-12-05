@@ -268,6 +268,7 @@ func (m *Model) addCopy(ctx context.Context) error {
 func (m *Model) updateProgress(ctx context.Context, db *sqlx.DB) error {
 	if m.monitor[CreateIndex] {
 		if err := m.addCreateIndex(ctx); err != nil {
+			log.Println(err)
 			m.status = err.Error()
 			m.monitor[CreateIndex] = false
 		}
@@ -275,6 +276,7 @@ func (m *Model) updateProgress(ctx context.Context, db *sqlx.DB) error {
 
 	if m.monitor[Vacuum] {
 		if err := m.addVacuum(ctx); err != nil {
+			log.Println(err)
 			m.status = err.Error()
 			m.monitor[Vacuum] = false
 		}
@@ -282,6 +284,7 @@ func (m *Model) updateProgress(ctx context.Context, db *sqlx.DB) error {
 
 	if m.monitor[Analyze] {
 		if err := m.addAnalyze(ctx); err != nil {
+			log.Println(err)
 			m.status = err.Error()
 			m.monitor[Analyze] = false
 		}
@@ -289,6 +292,7 @@ func (m *Model) updateProgress(ctx context.Context, db *sqlx.DB) error {
 
 	if m.monitor[Cluster] {
 		if err := m.addCluster(ctx); err != nil {
+			log.Println(err)
 			m.status = err.Error()
 			m.monitor[Cluster] = false
 		}
@@ -296,6 +300,7 @@ func (m *Model) updateProgress(ctx context.Context, db *sqlx.DB) error {
 
 	if m.monitor[BaseBackup] {
 		if err := m.addBaseBackup(ctx); err != nil {
+			log.Println(err)
 			m.status = err.Error()
 			m.monitor[BaseBackup] = false
 		}
@@ -303,6 +308,7 @@ func (m *Model) updateProgress(ctx context.Context, db *sqlx.DB) error {
 
 	if m.monitor[Copy] {
 		if err := m.addCopy(ctx); err != nil {
+			log.Println(err)
 			m.status = err.Error()
 			m.monitor[Copy] = false
 		}

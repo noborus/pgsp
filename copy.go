@@ -3,6 +3,7 @@ package pgsp
 import (
 	"bytes"
 	"context"
+	"log"
 	"strconv"
 
 	"github.com/jmoiron/sqlx"
@@ -35,6 +36,7 @@ func GetCopy(ctx context.Context, db *sqlx.DB) ([]Copy, error) {
 	}
 	if CopyQuery == "" {
 		CopyQuery = buildQuery(CopyTableName, CopyColumns)
+		log.Println(CopyQuery)
 	}
 	return selectCopy(ctx, db, CopyQuery)
 }

@@ -3,6 +3,7 @@ package pgsp
 import (
 	"bytes"
 	"context"
+	"log"
 	"strconv"
 
 	"github.com/jmoiron/sqlx"
@@ -38,6 +39,7 @@ func GetCluster(ctx context.Context, db *sqlx.DB) ([]Cluster, error) {
 	}
 	if ClusterQuery == "" {
 		ClusterQuery = buildQuery(ClusterTableName, ClusterColumns)
+		log.Println(ClusterQuery)
 	}
 	return selectCluster(ctx, db, ClusterQuery)
 

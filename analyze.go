@@ -3,6 +3,7 @@ package pgsp
 import (
 	"bytes"
 	"context"
+	"log"
 	"strconv"
 
 	"github.com/jmoiron/sqlx"
@@ -38,6 +39,7 @@ func GetAnalyze(ctx context.Context, db *sqlx.DB) ([]Analyze, error) {
 	}
 	if AnalyzeQuery == "" {
 		AnalyzeQuery = buildQuery(AnalyzeTableName, AnalyzeColumns)
+		log.Println(AnalyzeQuery)
 	}
 	return selectAnalyze(ctx, db, AnalyzeQuery)
 }

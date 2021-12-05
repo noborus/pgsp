@@ -3,6 +3,7 @@ package pgsp
 import (
 	"bytes"
 	"context"
+	"log"
 	"strconv"
 
 	"github.com/jmoiron/sqlx"
@@ -31,6 +32,8 @@ func GetBaseBackup(ctx context.Context, db *sqlx.DB) ([]BaseBackup, error) {
 	}
 	if BaseBackupQuery == "" {
 		BaseBackupQuery = buildQuery(BaseBackupTableName, BaseBackupColumns)
+		log.Println(BaseBackupQuery)
+
 	}
 	return selectBaseBackup(ctx, db, BaseBackupQuery)
 }

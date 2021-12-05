@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	tea "github.com/charmbracelet/bubbletea"
 	_ "github.com/lib/pq"
 
 	"github.com/noborus/pgsp"
@@ -59,15 +60,24 @@ func Progress(targets int) {
 		return
 	}
 	defer pgsp.DisConnect(db)
-
+	if tui.Debug {
+		f, err := tea.LogToFile("pgsp.log", "debug")
+		if err != nil {
+			fmt.Println("fatal:", err)
+			os.Exit(1)
+		}
+		defer f.Close()
+	}
 	model := tui.NewModel(db)
 	tui.Targets(&model, targets)
 
 	p := tui.NewProgram(model, config.FullScreen)
+	log.Println("Start")
 	if err := p.Start(); err != nil {
 		fmt.Printf("there's been an error: %v", err)
 		return
 	}
+	log.Println("End")
 }
 
 func setConfig() {
