@@ -1,15 +1,12 @@
 package vertical
 
 import (
-	"fmt"
 	"io"
 	"reflect"
-	"strconv"
 	"strings"
-	"time"
-	"unicode/utf8"
 
 	"github.com/mattn/go-runewidth"
+	"github.com/noborus/pgsp/str"
 )
 
 type Vertical struct {
@@ -80,30 +77,8 @@ func (v *Vertical) Render() {
 			io.WriteString(v.out, " ")
 			io.WriteString(v.out, string(v.bar))
 			io.WriteString(v.out, " ")
-			io.WriteString(v.out, toStr(r))
+			io.WriteString(v.out, str.ToStr(r))
 			io.WriteString(v.out, "\n")
 		}
 	}
-}
-
-func toStr(v interface{}) string {
-	switch t := v.(type) {
-	case nil:
-		return ""
-	case string:
-		return t
-	case []byte:
-		if ok := utf8.Valid(t); ok {
-			return string(t)
-		}
-	case int:
-		return strconv.Itoa(t)
-	case int32:
-		return strconv.FormatInt(int64(t), 10)
-	case int64:
-		return strconv.FormatInt(t, 10)
-	case time.Time:
-		return t.Format(time.RFC3339)
-	}
-	return fmt.Sprint(v)
 }

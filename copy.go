@@ -3,10 +3,10 @@ package pgsp
 import (
 	"bytes"
 	"context"
-	"strconv"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/noborus/pgsp/str"
 	"github.com/noborus/pgsp/vertical"
 	"github.com/olekukonko/tablewriter"
 )
@@ -70,19 +70,7 @@ func (v Copy) Color() (string, string) {
 }
 
 func (v Copy) Table() string {
-	value := []string{
-		strconv.Itoa(v.PID),
-		strconv.Itoa(v.DATID),
-		v.DATNAME,
-		strconv.Itoa(v.RELID),
-		v.COMMAND,
-		v.CTYPE,
-		strconv.FormatInt(v.BYTESProcessed, 10),
-		strconv.FormatInt(v.BYTESTotal, 10),
-		strconv.FormatInt(v.TUPLESProcessed, 10),
-		strconv.FormatInt(v.TUPLESExcluded, 10),
-	}
-
+	value := str.ToStrStruct(v)
 	buff := new(bytes.Buffer)
 	t := tablewriter.NewWriter(buff)
 	t.SetHeader(CopyColumns[0:7])

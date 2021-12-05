@@ -3,10 +3,10 @@ package pgsp
 import (
 	"bytes"
 	"context"
-	"strconv"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/noborus/pgsp/str"
 	"github.com/noborus/pgsp/vertical"
 	"github.com/olekukonko/tablewriter"
 )
@@ -79,25 +79,7 @@ func (v CreateIndex) Color() (string, string) {
 }
 
 func (v CreateIndex) Table() string {
-	value := []string{
-		strconv.Itoa(v.PID),
-		strconv.Itoa(v.DATID),
-		v.DATNAME,
-		strconv.Itoa(v.RELID),
-		strconv.Itoa(v.IndexRelid),
-		v.Command,
-		v.PHASE,
-		strconv.FormatInt(v.LockersTotal, 10),
-		strconv.FormatInt(v.LockersDone, 10),
-		strconv.FormatInt(v.LockersPid, 10),
-		strconv.FormatInt(v.BlocksTotal, 10),
-		strconv.FormatInt(v.BlocksDone, 10),
-		strconv.FormatInt(v.TuplesTotal, 10),
-		strconv.FormatInt(v.TuplesDone, 10),
-		strconv.FormatInt(v.PartitionsTotal, 10),
-		strconv.FormatInt(v.PartitionsDone, 10),
-	}
-
+	value := str.ToStrStruct(v)
 	buff := new(bytes.Buffer)
 
 	t := tablewriter.NewWriter(buff)

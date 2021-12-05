@@ -3,10 +3,10 @@ package pgsp
 import (
 	"bytes"
 	"context"
-	"strconv"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/noborus/pgsp/str"
 	"github.com/noborus/pgsp/vertical"
 
 	"github.com/olekukonko/tablewriter"
@@ -74,21 +74,7 @@ func (v Analyze) Color() (string, string) {
 }
 
 func (v Analyze) Table() string {
-	value := []string{
-		strconv.Itoa(v.PID),
-		strconv.Itoa(v.DATID),
-		v.DATNAME,
-		strconv.Itoa(v.RELID),
-		v.PHASE,
-		strconv.FormatInt(v.SampleBLKSTotal, 10),
-		strconv.FormatInt(v.SampleBLKSScanned, 10),
-		strconv.FormatInt(v.ExtStatsTotal, 10),
-		strconv.FormatInt(v.ExtStatsComputed, 10),
-		strconv.FormatInt(v.ChildTablesTotal, 10),
-		strconv.FormatInt(v.ChildTablesDone, 10),
-		strconv.Itoa(v.CurrentChildTableRelid),
-	}
-
+	value := str.ToStrStruct(v)
 	buff := new(bytes.Buffer)
 
 	t := tablewriter.NewWriter(buff)

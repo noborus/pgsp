@@ -3,10 +3,10 @@ package pgsp
 import (
 	"bytes"
 	"context"
-	"strconv"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/noborus/pgsp/str"
 	"github.com/noborus/pgsp/vertical"
 	"github.com/olekukonko/tablewriter"
 )
@@ -70,14 +70,7 @@ func (v BaseBackup) Table() string {
 	buff := new(bytes.Buffer)
 	t := tablewriter.NewWriter(buff)
 	t.SetHeader(BaseBackupColumns)
-	t.Append([]string{
-		strconv.Itoa(v.PID),
-		v.PHASE,
-		strconv.FormatInt(v.BackupTotal, 10),
-		strconv.FormatInt(v.BackupStreamed, 10),
-		strconv.FormatInt(v.TablespacesTotal, 10),
-		strconv.FormatInt(v.TablespacesStreamed, 10),
-	})
+	t.Append(str.ToStrStruct(v))
 	t.Render()
 	return buff.String()
 }

@@ -3,10 +3,10 @@ package pgsp
 import (
 	"bytes"
 	"context"
-	"strconv"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/noborus/pgsp/str"
 	"github.com/noborus/pgsp/vertical"
 	"github.com/olekukonko/tablewriter"
 )
@@ -73,20 +73,7 @@ func (v Vacuum) Color() (string, string) {
 }
 
 func (v Vacuum) Table() string {
-	value := []string{
-		strconv.Itoa(v.PID),
-		strconv.Itoa(v.DATID),
-		v.DATNAME,
-		strconv.Itoa(v.RELID),
-		v.PHASE,
-		strconv.FormatInt(v.HeapBLKSTotal, 10),
-		strconv.FormatInt(v.HeapBLKSScanned, 10),
-		strconv.FormatInt(v.HeapBLKSVacuumed, 10),
-		strconv.FormatInt(v.IndexVacuumCount, 10),
-		strconv.FormatInt(v.MaxDeadTuples, 10),
-		strconv.FormatInt(v.NumDeadTuples, 10),
-	}
-
+	value := str.ToStrStruct(v)
 	buff := new(bytes.Buffer)
 	t := tablewriter.NewWriter(buff)
 	t.SetHeader(VacuumColumns[0:7])
