@@ -3,7 +3,6 @@ package pgsp
 import (
 	"bytes"
 	"context"
-	"log"
 	"strconv"
 
 	"github.com/jmoiron/sqlx"
@@ -43,7 +42,6 @@ func GetCreateIndex(ctx context.Context, db *sqlx.DB) ([]PGSProgress, error) {
 	}
 	if CreateIndexQuery == "" {
 		CreateIndexQuery = buildQuery(CreateIndexTableName, CreateIndexColumns)
-		log.Println(CreateIndexQuery)
 	}
 	query := buildQuery(CreateIndexTableName, CreateIndexColumns)
 	return selectCreateIndex(ctx, db, query)

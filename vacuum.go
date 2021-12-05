@@ -3,7 +3,6 @@ package pgsp
 import (
 	"bytes"
 	"context"
-	"log"
 	"strconv"
 
 	"github.com/jmoiron/sqlx"
@@ -37,7 +36,6 @@ func GetVacuum(ctx context.Context, db *sqlx.DB) ([]PGSProgress, error) {
 	}
 	if VacuumQuery == "" {
 		VacuumQuery = buildQuery(VacuumTableName, VacuumColumns)
-		log.Println(VacuumQuery)
 	}
 	query := buildQuery(VacuumTableName, VacuumColumns)
 	return selectVacuum(ctx, db, query)

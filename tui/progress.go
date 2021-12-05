@@ -25,6 +25,18 @@ var Debug = false
 
 type tickMsg time.Time
 
+func DebugLogf(format string, v ...interface{}) {
+	if Debug {
+		log.Printf(format, v...)
+	}
+}
+
+func DebugLog(v ...interface{}) {
+	if Debug {
+		log.Print(v...)
+	}
+}
+
 func tickCmd() tea.Cmd {
 	return tea.Tick(UpdateInterval, func(t time.Time) tea.Msg {
 		return tickMsg(t)
@@ -108,7 +120,7 @@ func NewModel(db *sqlx.DB) Model {
 
 func Targets(m *Model, t int) *Model {
 	for _, v := range m.Monitor {
-		log.Printf("%s:%v", v.name, v.enable)
+		DebugLogf("%s:%v", v.name, v.enable)
 	}
 	if t != All {
 		if v, ok := m.Monitor[MonitorTaget(t)]; ok {
@@ -211,7 +223,7 @@ func (m *Model) updateProgress(ctx context.Context, db *sqlx.DB) error {
 	for _, v := range m.Monitor {
 		result, err := v.getFunc(ctx, m.DB)
 		if err != nil {
-			log.Println(err)
+			DebugLog(err)
 			m.status = err.Error()
 		}
 		for _, v := range result {
@@ -243,7 +255,7 @@ func (m Model) addProgress(pgrss []pgrs, v pgsp.PGSProgress) []pgrs {
 		progress.WithWidth(m.width-RightMargin),
 	)
 	if err != nil {
-		log.Println(err)
+		DebugLog(err)
 		return nil
 	}
 	pgrs := pgrs{

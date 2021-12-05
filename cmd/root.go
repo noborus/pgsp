@@ -72,12 +72,12 @@ func Progress(targets int) {
 	tui.Targets(&model, targets)
 
 	p := tui.NewProgram(model, config.FullScreen)
-	log.Println("Start")
+	tui.DebugLog("Start")
 	if err := p.Start(); err != nil {
 		fmt.Printf("there's been an error: %v", err)
 		return
 	}
-	log.Println("End")
+	tui.DebugLog("End")
 }
 
 func setConfig() {
