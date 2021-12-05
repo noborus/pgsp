@@ -32,7 +32,7 @@ var ClusterTableName = "pg_stat_progress_cluster"
 var ClusterQuery string
 var ClusterColumns []string
 
-func GetCluster(ctx context.Context, db *sqlx.DB) ([]PGSProgress, error) {
+func GetCluster(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
 	if len(ClusterColumns) == 0 {
 		ClusterColumns = getColumns(Cluster{})
 	}
@@ -43,14 +43,14 @@ func GetCluster(ctx context.Context, db *sqlx.DB) ([]PGSProgress, error) {
 
 }
 
-func selectCluster(ctx context.Context, db *sqlx.DB, query string) ([]PGSProgress, error) {
+func selectCluster(ctx context.Context, db *sqlx.DB, query string) ([]Progress, error) {
 	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var as []PGSProgress
+	var as []Progress
 	for rows.Next() {
 		var row Cluster
 		err = rows.StructScan(&row)

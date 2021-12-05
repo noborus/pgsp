@@ -32,7 +32,7 @@ var AnalyzeTableName = "pg_stat_progress_analyze"
 var AnalyzeQuery string
 var AnalyzeColumns []string
 
-func GetAnalyze(ctx context.Context, db *sqlx.DB) ([]PGSProgress, error) {
+func GetAnalyze(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
 	if len(AnalyzeColumns) == 0 {
 		AnalyzeColumns = getColumns(Analyze{})
 	}
@@ -42,14 +42,14 @@ func GetAnalyze(ctx context.Context, db *sqlx.DB) ([]PGSProgress, error) {
 	return selectAnalyze(ctx, db, AnalyzeQuery)
 }
 
-func selectAnalyze(ctx context.Context, db *sqlx.DB, query string) ([]PGSProgress, error) {
+func selectAnalyze(ctx context.Context, db *sqlx.DB, query string) ([]Progress, error) {
 	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var as []PGSProgress
+	var as []Progress
 	for rows.Next() {
 		var row Analyze
 		err = rows.StructScan(&row)

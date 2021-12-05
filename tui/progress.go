@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"sort"
-	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/progress"
@@ -45,37 +43,21 @@ func tickCmd() tea.Cmd {
 	})
 }
 
-type MonitorTable struct {
-	enable  bool
-	getFunc func(ctx context.Context, db *sqlx.DB) ([]pgsp.PGSProgress, error)
-}
-
 type pgrs struct {
 	time time.Time
-	v    pgsp.PGSProgress
+	v    pgsp.Progress
 	p    *progress.Model
 }
 
 type Model struct {
-	DB      *sqlx.DB
+	db      *sqlx.DB
 	spinC   int
 	pgrss   []pgrs
 	width   int
 	height  int
-	Monitor map[MonitorTaget]*MonitorTable
+	monitor pgsp.StatProgress
 	status  string
 }
-
-type MonitorTaget string
-
-const (
-	Analyze     = "Analyze"
-	CreateIndex = "CreateIndex"
-	Vacuum      = "Vacuum"
-	Cluster     = "Cluster"
-	BaseBackup  = "BaseBackup"
-	Copy        = "Copy"
-)
 
 var spin []string = []string{"|", "/", "-", "\\"}
 
@@ -85,47 +67,12 @@ func (m Model) Init() tea.Cmd {
 
 type Option func(*Model) error
 
-func NewModel(db *sqlx.DB) Model {
-	monitor := map[MonitorTaget]*MonitorTable{
-		Analyze: {
-			getFunc: pgsp.GetAnalyze,
-		},
-		CreateIndex: {
-			getFunc: pgsp.GetCreateIndex,
-		},
-		Vacuum: {
-			getFunc: pgsp.GetVacuum,
-		},
-		Cluster: {
-			getFunc: pgsp.GetCluster,
-		},
-		BaseBackup: {
-			getFunc: pgsp.GetBaseBackup,
-		},
-		Copy: {
-			getFunc: pgsp.GetCopy,
-		},
-	}
+func NewModel(db *sqlx.DB, monitor pgsp.StatProgress) Model {
 	model := Model{
-		DB:      db,
-		Monitor: monitor,
+		db:      db,
+		monitor: monitor,
 	}
 	return model
-}
-
-func Targets(m *Model, target ...string) *Model {
-	if len(target) != 0 {
-		for _, t := range target {
-			if v, ok := m.Monitor[MonitorTaget(t)]; ok {
-				v.enable = true
-			}
-		}
-		return m
-	}
-	for _, v := range m.Monitor {
-		v.enable = true
-	}
-	return m
 }
 
 func NewProgram(m Model, fullScreen bool) *tea.Program {
@@ -160,7 +107,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.spinC > len(spin)-1 {
 			m.spinC = 0
 		}
-		err := m.updateProgress(ctx, m.DB)
+		err := m.updateProgress(ctx)
 		if err != nil {
 			fmt.Printf("update error:%v", err)
 		}
@@ -209,18 +156,11 @@ func (m Model) View() string {
 	return s
 }
 
-func (m *Model) updateProgress(ctx context.Context, db *sqlx.DB) error {
-	var ms []string
-	for n, v := range m.Monitor {
-		if v.enable {
-			ms = append(ms, string(n))
-		}
-	}
-	sort.Strings(ms)
-	m.status = fmt.Sprintf("Monitor: %s\n", strings.Join(ms, " "))
+func (m *Model) updateProgress(ctx context.Context) error {
+	m.status = pgsp.TargetString(m.monitor)
 
-	for _, v := range m.Monitor {
-		result, err := v.getFunc(ctx, m.DB)
+	for _, table := range m.monitor {
+		result, err := table.Get(ctx, m.db)
 		if err != nil {
 			DebugLog(err)
 			m.status += err.Error()
@@ -240,7 +180,7 @@ func (m *Model) updateProgress(ctx context.Context, db *sqlx.DB) error {
 	return nil
 }
 
-func (m Model) addProgress(pgrss []pgrs, v pgsp.PGSProgress) []pgrs {
+func (m Model) addProgress(pgrss []pgrs, v pgsp.Progress) []pgrs {
 	for n, pgr := range pgrss {
 		if pgr.v.Name() == v.Name() && pgr.v.Pid() == v.Pid() {
 			pgrss[n].v = v

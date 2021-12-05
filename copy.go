@@ -29,7 +29,7 @@ var CopyTableName = "pg_stat_progress_copy"
 var CopyQuery string
 var CopyColumns []string
 
-func GetCopy(ctx context.Context, db *sqlx.DB) ([]PGSProgress, error) {
+func GetCopy(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
 	if len(CopyColumns) == 0 {
 		CopyColumns = getColumns(Copy{})
 	}
@@ -39,14 +39,14 @@ func GetCopy(ctx context.Context, db *sqlx.DB) ([]PGSProgress, error) {
 	return selectCopy(ctx, db, CopyQuery)
 }
 
-func selectCopy(ctx context.Context, db *sqlx.DB, query string) ([]PGSProgress, error) {
+func selectCopy(ctx context.Context, db *sqlx.DB, query string) ([]Progress, error) {
 	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var as []PGSProgress
+	var as []Progress
 	for rows.Next() {
 		var row Copy
 		err = rows.StructScan(&row)

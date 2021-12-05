@@ -30,7 +30,7 @@ var VacuumTableName = "pg_stat_progress_vacuum"
 var VacuumQuery string
 var VacuumColumns []string
 
-func GetVacuum(ctx context.Context, db *sqlx.DB) ([]PGSProgress, error) {
+func GetVacuum(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
 	if len(VacuumColumns) == 0 {
 		VacuumColumns = getColumns(Vacuum{})
 	}
@@ -41,14 +41,14 @@ func GetVacuum(ctx context.Context, db *sqlx.DB) ([]PGSProgress, error) {
 	return selectVacuum(ctx, db, query)
 }
 
-func selectVacuum(ctx context.Context, db *sqlx.DB, query string) ([]PGSProgress, error) {
+func selectVacuum(ctx context.Context, db *sqlx.DB, query string) ([]Progress, error) {
 	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var as []PGSProgress
+	var as []Progress
 	for rows.Next() {
 		var row Vacuum
 		err = rows.StructScan(&row)

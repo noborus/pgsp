@@ -25,7 +25,7 @@ var BaseBackupTableName = "pg_stat_progress_basebackup"
 var BaseBackupQuery string
 var BaseBackupColumns []string
 
-func GetBaseBackup(ctx context.Context, db *sqlx.DB) ([]PGSProgress, error) {
+func GetBaseBackup(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
 	if len(BaseBackupColumns) == 0 {
 		BaseBackupColumns = getColumns(BaseBackup{})
 	}
@@ -35,14 +35,14 @@ func GetBaseBackup(ctx context.Context, db *sqlx.DB) ([]PGSProgress, error) {
 	return selectBaseBackup(ctx, db, BaseBackupQuery)
 }
 
-func selectBaseBackup(ctx context.Context, db *sqlx.DB, query string) ([]PGSProgress, error) {
+func selectBaseBackup(ctx context.Context, db *sqlx.DB, query string) ([]Progress, error) {
 	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var as []PGSProgress
+	var as []Progress
 	for rows.Next() {
 		var row BaseBackup
 		err = rows.StructScan(&row)

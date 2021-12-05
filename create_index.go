@@ -36,7 +36,7 @@ var CreateIndexTableName = "pg_stat_progress_create_index"
 var CreateIndexQuery string
 var CreateIndexColumns []string
 
-func GetCreateIndex(ctx context.Context, db *sqlx.DB) ([]PGSProgress, error) {
+func GetCreateIndex(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
 	if len(CreateIndexColumns) == 0 {
 		CreateIndexColumns = getColumns(CreateIndex{})
 	}
@@ -47,14 +47,14 @@ func GetCreateIndex(ctx context.Context, db *sqlx.DB) ([]PGSProgress, error) {
 	return selectCreateIndex(ctx, db, query)
 }
 
-func selectCreateIndex(ctx context.Context, db *sqlx.DB, query string) ([]PGSProgress, error) {
+func selectCreateIndex(ctx context.Context, db *sqlx.DB, query string) ([]Progress, error) {
 	rows, err := db.QueryxContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var as []PGSProgress
+	var as []Progress
 	for rows.Next() {
 		var row CreateIndex
 		err = rows.StructScan(&row)

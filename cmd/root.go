@@ -45,6 +45,7 @@ var rootCmd = &cobra.Command{
 	Use:   "pgsp",
 	Short: "pg_stat_progress monitor",
 	Long: `Monitors PostgreSQL's pg_stat_progress_*.
+Analyze, BaseBackup, Cluster, Copy, CreateIndex, Vacuum can be specified.
 `,
 	Version: Version + " rev:" + Revision,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -68,16 +69,18 @@ func Progress(targets []string) {
 		}
 		defer f.Close()
 	}
-	model := tui.NewModel(db)
-	tui.Targets(&model, targets...)
+
+	monitor := pgsp.NewMonitor()
+	monitor = pgsp.Targets(monitor, targets)
+	model := tui.NewModel(db, monitor)
 
 	p := tui.NewProgram(model, config.FullScreen)
 	tui.DebugLog("Start")
+	defer tui.DebugLog("End")
 	if err := p.Start(); err != nil {
 		fmt.Printf("there's been an error: %v", err)
 		return
 	}
-	tui.DebugLog("End")
 }
 
 func setConfig() {
