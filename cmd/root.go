@@ -55,12 +55,6 @@ Analyze, BaseBackup, Cluster, Copy, CreateIndex, Vacuum can be specified.
 
 func Progress(targets []string) {
 	setConfig()
-	db, err := pgsp.Connect(config.DSN)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer pgsp.DisConnect(db)
 	if tui.Debug {
 		f, err := tea.LogToFile("pgsp.log", "debug")
 		if err != nil {
@@ -70,9 +64,15 @@ func Progress(targets []string) {
 		defer f.Close()
 	}
 
-	monitor := pgsp.NewMonitor()
-	monitor = pgsp.Targets(monitor, targets)
-	model := tui.NewModel(db, monitor)
+	monitor, err := pgsp.New(config.DSN)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer monitor.DisConnect()
+
+	monitor.Targets(targets)
+	model := tui.NewModel(monitor)
 
 	p := tui.NewProgram(model, config.FullScreen)
 	tui.DebugLog("Start")

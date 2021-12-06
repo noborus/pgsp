@@ -9,7 +9,6 @@ import (
 	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/jmoiron/sqlx"
 	"github.com/noborus/pgsp"
 )
 
@@ -50,12 +49,11 @@ type pgrs struct {
 }
 
 type Model struct {
-	db      *sqlx.DB
 	spinC   int
 	pgrss   []pgrs
 	width   int
 	height  int
-	monitor pgsp.StatProgress
+	monitor *pgsp.Pgsp
 	status  string
 }
 
@@ -67,9 +65,8 @@ func (m Model) Init() tea.Cmd {
 
 type Option func(*Model) error
 
-func NewModel(db *sqlx.DB, monitor pgsp.StatProgress) Model {
+func NewModel(monitor *pgsp.Pgsp) Model {
 	model := Model{
-		db:      db,
 		monitor: monitor,
 	}
 	return model
@@ -157,13 +154,14 @@ func (m Model) View() string {
 }
 
 func (m *Model) updateProgress(ctx context.Context) error {
-	m.status = fmt.Sprintf("Monitor: %s\n", pgsp.TargetString(m.monitor))
+	m.status = fmt.Sprintf("Monitor: %s\n", m.monitor.TargetString())
 
-	for _, table := range m.monitor {
-		result, err := table.Get(ctx, m.db)
+	for _, table := range m.monitor.StatProgress {
+		result, err := table.Get(ctx, m.monitor.DB)
 		if err != nil {
+			table.Enable = false
 			DebugLog(err)
-			m.status += err.Error()
+			m.status += err.Error() + "\n"
 		}
 		for _, v := range result {
 			m.pgrss = m.addProgress(m.pgrss, v)

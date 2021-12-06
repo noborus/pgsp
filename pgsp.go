@@ -14,12 +14,12 @@ import (
 type SPTaget string
 
 const (
-	SPAnalyze     = "Analyze"
-	SPCreateIndex = "CreateIndex"
-	SPVacuum      = "Vacuum"
-	SPCluster     = "Cluster"
-	SPBaseBackup  = "BaseBackup"
-	SPCopy        = "Copy"
+	SPAnalyze     SPTaget = "Analyze"
+	SPCreateIndex SPTaget = "CreateIndex"
+	SPVacuum      SPTaget = "Vacuum"
+	SPCluster     SPTaget = "Cluster"
+	SPBaseBackup  SPTaget = "BaseBackup"
+	SPCopy        SPTaget = "Copy"
 )
 
 type SPTable struct {
@@ -28,6 +28,11 @@ type SPTable struct {
 }
 
 type StatProgress map[SPTaget]*SPTable
+
+type Pgsp struct {
+	DB           *sqlx.DB
+	StatProgress StatProgress
+}
 
 type Progress interface {
 	Name() string
@@ -38,23 +43,20 @@ type Progress interface {
 	Progress() float64
 }
 
-func Connect(dsn string) (*sqlx.DB, error) {
-	db, err := sqlx.Connect("postgres", dsn)
+func New(dsn string) (*Pgsp, error) {
+	db, err := Connect(dsn)
 	if err != nil {
 		return nil, err
 	}
-	if err := db.Ping(); err != nil {
-		return nil, err
-	}
-	return db, nil
-}
-
-func DisConnect(db *sqlx.DB) error {
-	return db.Close()
+	monitor := NewMonitor()
+	return &Pgsp{
+		DB:           db,
+		StatProgress: monitor,
+	}, nil
 }
 
 func NewMonitor() StatProgress {
-	return map[SPTaget]*SPTable{
+	return StatProgress{
 		SPAnalyze: {
 			Get: GetAnalyze,
 		},
@@ -74,7 +76,53 @@ func NewMonitor() StatProgress {
 			Get: GetCopy,
 		},
 	}
+}
 
+func Connect(dsn string) (*sqlx.DB, error) {
+	db, err := sqlx.Connect("postgres", dsn)
+	if err != nil {
+		return nil, err
+	}
+	if err := db.Ping(); err != nil {
+		return nil, err
+	}
+	return db, nil
+}
+
+func (p *Pgsp) DisConnect() error {
+	return p.DB.Close()
+}
+
+func (p *Pgsp) Targets(target []string) {
+	if len(target) != 0 {
+		enableF := false
+		for _, t := range target {
+			if v, ok := p.StatProgress[SPTaget(t)]; ok {
+				enableF = true
+				v.Enable = true
+			}
+		}
+		// Return if there is even one target.
+		if enableF {
+			return
+		}
+	}
+
+	// All targets.
+	for _, v := range p.StatProgress {
+		v.Enable = true
+	}
+}
+
+func (p *Pgsp) TargetString() string {
+	var ms []string
+	for n, v := range p.StatProgress {
+		if v.Enable {
+			ms = append(ms, string(n))
+		}
+	}
+	sort.Strings(ms)
+	return strings.Join(ms, " ")
 }
 
 func buildQuery(tableName string, columns []string) string {
@@ -95,37 +143,4 @@ func getColumns(s interface{}) []string {
 		columns = append(columns, j)
 	}
 	return columns
-}
-
-func Targets(sp StatProgress, target []string) StatProgress {
-	if len(target) != 0 {
-		enableF := false
-		for _, t := range target {
-			if v, ok := sp[SPTaget(t)]; ok {
-				enableF = true
-				v.Enable = true
-			}
-		}
-		// Return if there is even one target.
-		if enableF {
-			return sp
-		}
-	}
-
-	// All targets.
-	for _, v := range sp {
-		v.Enable = true
-	}
-	return sp
-}
-
-func TargetString(sp StatProgress) string {
-	var ms []string
-	for n, v := range sp {
-		if v.Enable {
-			ms = append(ms, string(n))
-		}
-	}
-	sort.Strings(ms)
-	return strings.Join(ms, " ")
 }
