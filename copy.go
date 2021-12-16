@@ -25,9 +25,11 @@ type Copy struct {
 	TUPLESExcluded  int64  `db:"tuples_excluded"`
 }
 
-var CopyTableName = "pg_stat_progress_copy"
-var CopyQuery string
-var CopyColumns []string
+var (
+	CopyTableName = "pg_stat_progress_copy"
+	CopyQuery     string
+	CopyColumns   []string
+)
 
 func GetCopy(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
 	if len(CopyColumns) == 0 {
@@ -65,6 +67,7 @@ func (v Copy) Name() string {
 func (v Copy) Pid() int {
 	return v.PID
 }
+
 func (v Copy) Color() (string, string) {
 	return "#5AF6FF", "#7CFFCB"
 }

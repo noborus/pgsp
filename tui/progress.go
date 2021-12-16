@@ -122,32 +122,31 @@ func (m Model) View() string {
 		return s
 	}
 
-	var style = lipgloss.NewStyle().
+	style := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("#FAFAFA")).
 		Background(lipgloss.Color("#7D56F4"))
 
 	for _, pgrs := range m.pgrss {
-		if pgrs.p != nil {
-			s += style.Render(pgrs.v.Name()) + "\n"
-			if m.width >= MinimumTableWidth {
-				s += pgrs.v.Table()
+		if pgrs.p == nil {
+			continue
+		}
+		s += style.Render(pgrs.v.Name()) + "\n"
+		if m.width >= MinimumTableWidth {
+			s += pgrs.v.Table()
+		} else if num*MaxVerticalRows < m.height {
+			s += pgrs.v.Vertical()
+		}
+		p := pgrs.v.Progress()
+		if p > 0 && p <= 1 {
+			if time.Since(pgrs.time) > time.Second*1 {
+				// Deleted records are considered 100%.
+				s += "\n" + pgrs.p.ViewAs(float64(1))
+				s += " " + time.Since(pgrs.time).Truncate(time.Second).String()
 			} else {
-				if num*MaxVerticalRows < m.height {
-					s += pgrs.v.Vertical()
-				}
+				s += "\n" + pgrs.p.ViewAs(p)
 			}
-			p := pgrs.v.Progress()
-			if p > 0 && p <= 1 {
-				if time.Since(pgrs.time) > time.Second*1 {
-					// Deleted records are considered 100%.
-					s += "\n" + pgrs.p.View(1)
-					s += " " + time.Since(pgrs.time).Truncate(time.Second).String()
-				} else {
-					s += "\n" + pgrs.p.View(p)
-				}
-				s += "\n"
-			}
+			s += "\n"
 		}
 	}
 	return s
@@ -187,18 +186,14 @@ func (m Model) addProgress(pgrss []pgrs, v pgsp.Progress) []pgrs {
 		}
 	}
 
-	pg, err := progress.NewModel(
+	pg := progress.NewModel(
 		progress.WithScaledGradient(v.Color()),
 		progress.WithWidth(m.width-RightMargin),
 	)
-	if err != nil {
-		DebugLog(err)
-		return nil
-	}
 	pgrs := pgrs{
 		time: time.Now(),
 		v:    v,
-		p:    pg,
+		p:    &pg,
 	}
 	pgrss = append(pgrss, pgrs)
 	return pgrss
