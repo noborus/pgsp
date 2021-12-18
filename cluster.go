@@ -12,7 +12,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-// pg_stat_progress_Cluster
+// pg_stat_progress_Cluster.
 type Cluster struct {
 	PID               int    `db:"pid"`
 	DATID             int    `db:"datid"`
@@ -28,9 +28,11 @@ type Cluster struct {
 	IndexRebuildCount int64  `db:"index_rebuild_count"`
 }
 
-var ClusterTableName = "pg_stat_progress_cluster"
-var ClusterQuery string
-var ClusterColumns []string
+var (
+	ClusterTableName = "pg_stat_progress_cluster"
+	ClusterQuery     string
+	ClusterColumns   []string
+)
 
 func GetCluster(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
 	if len(ClusterColumns) == 0 {
@@ -40,7 +42,6 @@ func GetCluster(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
 		ClusterQuery = buildQuery(ClusterTableName, ClusterColumns)
 	}
 	return selectCluster(ctx, db, ClusterQuery)
-
 }
 
 func selectCluster(ctx context.Context, db *sqlx.DB, query string) ([]Progress, error) {
@@ -97,6 +98,7 @@ func (v Cluster) Vertical() string {
 	vt.SetHeader(ClusterColumns)
 	vt.AppendStruct(v)
 	vt.Render()
+
 	return buff.String()
 }
 

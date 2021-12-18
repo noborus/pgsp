@@ -12,7 +12,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-// pg_stat_progress_analyze
+// pg_stat_progress_analyze.
 type Analyze struct {
 	PID                    int    `db:"pid"`
 	DATID                  int    `db:"datid"`
@@ -28,9 +28,11 @@ type Analyze struct {
 	CurrentChildTableRelid int    `db:"current_child_table_relid"`
 }
 
-var AnalyzeTableName = "pg_stat_progress_analyze"
-var AnalyzeQuery string
-var AnalyzeColumns []string
+var (
+	AnalyzeTableName = "pg_stat_progress_analyze"
+	AnalyzeQuery     string
+	AnalyzeColumns   []string
+)
 
 func GetAnalyze(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
 	if len(AnalyzeColumns) == 0 {

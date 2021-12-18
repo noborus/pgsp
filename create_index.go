@@ -33,8 +33,10 @@ type CreateIndex struct {
 
 var CreateIndexTableName = "pg_stat_progress_create_index"
 
-var CreateIndexQuery string
-var CreateIndexColumns []string
+var (
+	CreateIndexQuery   string
+	CreateIndexColumns []string
+)
 
 func GetCreateIndex(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
 	if len(CreateIndexColumns) == 0 {
@@ -43,8 +45,7 @@ func GetCreateIndex(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
 	if CreateIndexQuery == "" {
 		CreateIndexQuery = buildQuery(CreateIndexTableName, CreateIndexColumns)
 	}
-	query := buildQuery(CreateIndexTableName, CreateIndexColumns)
-	return selectCreateIndex(ctx, db, query)
+	return selectCreateIndex(ctx, db, CreateIndexQuery)
 }
 
 func selectCreateIndex(ctx context.Context, db *sqlx.DB, query string) ([]Progress, error) {
@@ -101,6 +102,7 @@ func (v CreateIndex) Vertical() string {
 	vt.SetHeader(CreateIndexColumns)
 	vt.AppendStruct(v)
 	vt.Render()
+
 	return buff.String()
 }
 

@@ -11,7 +11,7 @@ import (
 	"github.com/olekukonko/tablewriter"
 )
 
-// pg_stat_progress_basebackup
+// pg_stat_progress_basebackup.
 type BaseBackup struct {
 	PID                 int    `db:"pid"`
 	PHASE               string `db:"phase"`
@@ -21,9 +21,11 @@ type BaseBackup struct {
 	TablespacesStreamed int64  `db:"tablespaces_streamed"`
 }
 
-var BaseBackupTableName = "pg_stat_progress_basebackup"
-var BaseBackupQuery string
-var BaseBackupColumns []string
+var (
+	BaseBackupTableName = "pg_stat_progress_basebackup"
+	BaseBackupQuery     string
+	BaseBackupColumns   []string
+)
 
 func GetBaseBackup(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
 	if len(BaseBackupColumns) == 0 {
@@ -72,6 +74,7 @@ func (v BaseBackup) Table() string {
 	t.SetHeader(BaseBackupColumns)
 	t.Append(str.ToStrStruct(v))
 	t.Render()
+
 	return buff.String()
 }
 
@@ -81,6 +84,7 @@ func (v BaseBackup) Vertical() string {
 	vt.SetHeader(BaseBackupColumns)
 	vt.AppendStruct(v)
 	vt.Render()
+
 	return buff.String()
 }
 

@@ -26,9 +26,11 @@ type Vacuum struct {
 	NumDeadTuples    int64  `db:"num_dead_tuples"`
 }
 
-var VacuumTableName = "pg_stat_progress_vacuum"
-var VacuumQuery string
-var VacuumColumns []string
+var (
+	VacuumTableName = "pg_stat_progress_vacuum"
+	VacuumQuery     string
+	VacuumColumns   []string
+)
 
 func GetVacuum(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
 	if len(VacuumColumns) == 0 {
@@ -37,8 +39,7 @@ func GetVacuum(ctx context.Context, db *sqlx.DB) ([]Progress, error) {
 	if VacuumQuery == "" {
 		VacuumQuery = buildQuery(VacuumTableName, VacuumColumns)
 	}
-	query := buildQuery(VacuumTableName, VacuumColumns)
-	return selectVacuum(ctx, db, query)
+	return selectVacuum(ctx, db, VacuumQuery)
 }
 
 func selectVacuum(ctx context.Context, db *sqlx.DB, query string) ([]Progress, error) {
