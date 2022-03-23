@@ -3,6 +3,7 @@ package pgsp
 import (
 	"bytes"
 	"context"
+	"database/sql"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
@@ -13,12 +14,12 @@ import (
 
 // pg_stat_progress_basebackup.
 type BaseBackup struct {
-	PID                 int    `db:"pid"`
-	PHASE               string `db:"phase"`
-	BackupTotal         int64  `db:"backup_total"`
-	BackupStreamed      int64  `db:"backup_streamed"`
-	TablespacesTotal    int64  `db:"tablespaces_total"`
-	TablespacesStreamed int64  `db:"tablespaces_streamed"`
+	PID                 int           `db:"pid"`
+	PHASE               string        `db:"phase"`
+	BackupTotal         sql.NullInt64 `db:"backup_total"`
+	BackupStreamed      int64         `db:"backup_streamed"`
+	TablespacesTotal    int64         `db:"tablespaces_total"`
+	TablespacesStreamed int64         `db:"tablespaces_streamed"`
 }
 
 var (
@@ -89,8 +90,9 @@ func (v BaseBackup) Vertical() string {
 }
 
 func (v BaseBackup) Progress() float64 {
-	if v.BackupTotal != 0 {
-		return float64(v.BackupStreamed) / float64(v.BackupTotal)
+	total := v.BackupTotal.Int64
+	if total != 0 {
+		return float64(v.BackupStreamed) / float64(total)
 	}
 	return float64(v.TablespacesStreamed) / float64(v.TablespacesTotal)
 }

@@ -1,6 +1,7 @@
 package str_test
 
 import (
+	"database/sql"
 	"reflect"
 	"testing"
 
@@ -23,7 +24,7 @@ func TestToStrStruct(t *testing.T) {
 				value: pgsp.BaseBackup{
 					PID:                 1,
 					PHASE:               "t",
-					BackupTotal:         1,
+					BackupTotal:         sql.NullInt64{Int64: 1, Valid: true},
 					BackupStreamed:      1,
 					TablespacesTotal:    1,
 					TablespacesStreamed: 1,
@@ -54,6 +55,13 @@ func TestToStr(t *testing.T) {
 			name: "test1",
 			args: args{
 				v: 1,
+			},
+			want: "1",
+		},
+		{
+			name: "testSQLNullInt64",
+			args: args{
+				v: sql.NullInt64{Int64: 1, Valid: true},
 			},
 			want: "1",
 		},
