@@ -2,6 +2,7 @@ package vertical
 
 import (
 	"bytes"
+	"database/sql"
 	"testing"
 )
 
@@ -26,6 +27,19 @@ func TestVertical_Render(t *testing.T) {
 				},
 			},
 			want: `a  | a
+ab | b
+`,
+		},
+		{
+			name: "testNullInt64",
+			fields: fields{
+				bar:    '|',
+				header: []string{"a", "ab"},
+				rows: [][]interface{}{
+					{sql.NullInt64{Int64: 1, Valid: true}, "b"},
+				},
+			},
+			want: `a  | 1
 ab | b
 `,
 		},
@@ -62,8 +76,8 @@ b                                    | b
 
 func TestVertical_AppendStruct(t *testing.T) {
 	type test struct {
-		a int
-		b string
+		PID   int    `db:"pid"`
+		PHASE string `db:"phase"`
 	}
 	tests := []struct {
 		name string
@@ -73,8 +87,8 @@ func TestVertical_AppendStruct(t *testing.T) {
 		{
 			name: "testStruct1",
 			args: test{
-				a: 1,
-				b: "test",
+				PID:   1,
+				PHASE: "test",
 			},
 			want: ` a | 1
  b | test

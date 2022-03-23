@@ -47,7 +47,7 @@ func (v *Vertical) AppendStruct(value interface{}) {
 	num := rf.NumField()
 	row := make([]interface{}, num)
 	for i := 0; i < num; i++ {
-		row[i] = rv.Field(i)
+		row[i] = rv.Field(i).Interface()
 	}
 	v.rows = append(v.rows, row)
 }
