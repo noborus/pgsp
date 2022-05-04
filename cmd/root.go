@@ -69,7 +69,11 @@ func Progress(targets []string) {
 		log.Println(err)
 		return
 	}
-	defer monitor.DisConnect()
+	defer func() {
+		if err := monitor.DisConnect(); err != nil {
+			log.Println(err)
+		}
+	}()
 
 	monitor.Targets(targets)
 	model := tui.NewModel(monitor)
