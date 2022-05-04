@@ -1,7 +1,9 @@
 package vertical
 
 import (
+	"bytes"
 	"io"
+	"log"
 	"reflect"
 	"strings"
 
@@ -65,20 +67,24 @@ func (v *Vertical) Render() {
 		}
 	}
 
+	buff := new(bytes.Buffer)
 	for _, row := range v.rows {
 		for n, r := range row {
 			h := ""
 			if len(v.header) > n {
 				h = v.header[n]
 			}
-			io.WriteString(v.out, strings.Repeat(" ", v.padding))
-			io.WriteString(v.out, h)
-			io.WriteString(v.out, strings.Repeat(" ", maxH-len(h)))
-			io.WriteString(v.out, " ")
-			io.WriteString(v.out, string(v.bar))
-			io.WriteString(v.out, " ")
-			io.WriteString(v.out, str.ToStr(r))
-			io.WriteString(v.out, "\n")
+			buff.WriteString(strings.Repeat(" ", v.padding))
+			buff.WriteString(h)
+			buff.WriteString(strings.Repeat(" ", maxH-len(h)))
+			buff.WriteString(" ")
+			buff.WriteString(string(v.bar))
+			buff.WriteString(" ")
+			buff.WriteString(str.ToStr(r))
+			buff.WriteString("\n")
 		}
+	}
+	if _, err := io.WriteString(v.out, buff.String()); err != nil {
+		log.Panicln(err)
 	}
 }
