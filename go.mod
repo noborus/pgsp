@@ -8,7 +8,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.4.0
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/lib/pq v1.10.5
+	github.com/lib/pq v1.10.6
 	github.com/mattn/go-runewidth v0.0.13
 	github.com/muesli/ansi v0.0.0-20211031195517-c9f0611b6c70 // indirect
 	github.com/muesli/termenv v0.11.0 // indirect
