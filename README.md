@@ -11,7 +11,7 @@ See [Progress Reporting](https://www.postgresql.org/docs/current/progress-report
 
 ## Requires
 
-go 1.16 or later
+go 1.18 or later
 
 ## Install
 
