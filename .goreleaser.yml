@@ -7,8 +7,8 @@ builds:
     main: ./cmd/pgsp
     binary: pgsp
     ldflags:
-      - -X main.Version={{.Version}}
-      - -X main.Revision={{.ShortCommit}}
+      - -X github.com/noborus/pgsp/cmd.Version={{.Version}}
+      - -X github.com/noborus/pgsp/cmd.Revision={{.ShortCommit}}
     env:
       - CGO_ENABLED=0
     goos:
