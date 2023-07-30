@@ -7,8 +7,8 @@ require (
 	github.com/charmbracelet/bubbletea v0.19.3
 	github.com/charmbracelet/lipgloss v0.4.0
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/lib/pq v1.10.7
-	github.com/mattn/go-runewidth v0.0.14
+	github.com/lib/pq v1.10.9
+	github.com/mattn/go-runewidth v0.0.15
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/spf13/cobra v1.3.0
 	github.com/spf13/viper v1.10.1
