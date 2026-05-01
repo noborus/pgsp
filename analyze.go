@@ -3,29 +3,30 @@ package pgsp
 import (
 	"bytes"
 	"context"
+	"image/color"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/noborus/pgsp/str"
-	"github.com/noborus/pgsp/vertical"
 
 	"github.com/olekukonko/tablewriter"
 )
 
 // pg_stat_progress_analyze.
 type Analyze struct {
-	PID                    int    `db:"pid"`
-	DATID                  int    `db:"datid"`
-	DATNAME                string `db:"datname"`
-	RELID                  int    `db:"relid"`
-	PHASE                  string `db:"phase"`
-	SampleBLKSTotal        int64  `db:"sample_blks_total"`
-	SampleBLKSScanned      int64  `db:"sample_blks_scanned"`
-	ExtStatsTotal          int64  `db:"ext_stats_total"`
-	ExtStatsComputed       int64  `db:"ext_stats_computed"`
-	ChildTablesTotal       int64  `db:"child_tables_total"`
-	ChildTablesDone        int64  `db:"child_tables_done"`
-	CurrentChildTableRelid int    `db:"current_child_table_relid"`
+	PID                    int     `db:"pid"`
+	DATID                  int     `db:"datid"`
+	DATNAME                string  `db:"datname"`
+	RELID                  int     `db:"relid"`
+	PHASE                  string  `db:"phase"`
+	SampleBLKSTotal        int64   `db:"sample_blks_total"`
+	SampleBLKSScanned      int64   `db:"sample_blks_scanned"`
+	ExtStatsTotal          int64   `db:"ext_stats_total"`
+	ExtStatsComputed       int64   `db:"ext_stats_computed"`
+	ChildTablesTotal       int64   `db:"child_tables_total"`
+	ChildTablesDone        int64   `db:"child_tables_done"`
+	CurrentChildTableRelid int     `db:"current_child_table_relid"`
+	DelayTime              float64 `db:"delay_time"`
 }
 
 var (
@@ -71,8 +72,8 @@ func (v Analyze) Pid() int {
 	return v.PID
 }
 
-func (v Analyze) Color() (string, string) {
-	return "#FF7CCB", "#FDFF8C"
+func (v Analyze) Color() (color.Color, color.Color) {
+	return color.RGBA{R: 255, G: 124, B: 203}, color.RGBA{R: 253, G: 255, B: 140}
 }
 
 func (v Analyze) Table() string {
@@ -80,24 +81,10 @@ func (v Analyze) Table() string {
 	buff := new(bytes.Buffer)
 
 	t := tablewriter.NewWriter(buff)
-	t.SetHeader(AnalyzeColumns[0:7])
-	t.Append(value[0:7])
+	t.Header(AnalyzeColumns)
+	t.Append(value)
 	t.Render()
 
-	t2 := tablewriter.NewWriter(buff)
-	t2.SetHeader(AnalyzeColumns[7:])
-	t2.Append(value[7:])
-	t2.Render()
-
-	return buff.String()
-}
-
-func (v Analyze) Vertical() string {
-	buff := new(bytes.Buffer)
-	vt := vertical.NewWriter(buff)
-	vt.SetHeader(AnalyzeColumns)
-	vt.AppendStruct(v)
-	vt.Render()
 	return buff.String()
 }
 

@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"context"
 	"database/sql"
+	"image/color"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/noborus/pgsp/str"
-	"github.com/noborus/pgsp/vertical"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -65,26 +65,16 @@ func (v BaseBackup) Pid() int {
 	return v.PID
 }
 
-func (v BaseBackup) Color() (string, string) {
-	return "#FDFF8C", "#FF7CCB"
+func (v BaseBackup) Color() (color.Color, color.Color) {
+	return color.RGBA{R: 253, G: 255, B: 140}, color.RGBA{R: 255, G: 124, B: 203}
 }
 
 func (v BaseBackup) Table() string {
 	buff := new(bytes.Buffer)
 	t := tablewriter.NewWriter(buff)
-	t.SetHeader(BaseBackupColumns)
+	t.Header(BaseBackupColumns)
 	t.Append(str.ToStrStruct(v))
 	t.Render()
-
-	return buff.String()
-}
-
-func (v BaseBackup) Vertical() string {
-	buff := new(bytes.Buffer)
-	vt := vertical.NewWriter(buff)
-	vt.SetHeader(BaseBackupColumns)
-	vt.AppendStruct(v)
-	vt.Render()
 
 	return buff.String()
 }

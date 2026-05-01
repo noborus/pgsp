@@ -3,11 +3,11 @@ package pgsp
 import (
 	"bytes"
 	"context"
+	"image/color"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/noborus/pgsp/str"
-	"github.com/noborus/pgsp/vertical"
 
 	"github.com/olekukonko/tablewriter"
 )
@@ -71,8 +71,8 @@ func (v Cluster) Pid() int {
 	return v.PID
 }
 
-func (v Cluster) Color() (string, string) {
-	return "#5A56E0", "#EE6FF8"
+func (v Cluster) Color() (color.Color, color.Color) {
+	return color.RGBA{R: 90, G: 86, B: 224}, color.RGBA{R: 238, G: 111, B: 248}
 }
 
 func (v Cluster) Table() string {
@@ -80,24 +80,9 @@ func (v Cluster) Table() string {
 	buff := new(bytes.Buffer)
 
 	t := tablewriter.NewWriter(buff)
-	t.SetHeader(ClusterColumns[0:7])
-	t.Append(value[0:7])
+	t.Header(ClusterColumns)
+	t.Append(value)
 	t.Render()
-
-	t2 := tablewriter.NewWriter(buff)
-	t2.SetHeader(ClusterColumns[7:])
-	t2.Append(value[7:])
-	t2.Render()
-
-	return buff.String()
-}
-
-func (v Cluster) Vertical() string {
-	buff := new(bytes.Buffer)
-	vt := vertical.NewWriter(buff)
-	vt.SetHeader(ClusterColumns)
-	vt.AppendStruct(v)
-	vt.Render()
 
 	return buff.String()
 }

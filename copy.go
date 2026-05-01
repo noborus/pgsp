@@ -3,11 +3,11 @@ package pgsp
 import (
 	"bytes"
 	"context"
+	"image/color"
 
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/noborus/pgsp/str"
-	"github.com/noborus/pgsp/vertical"
 	"github.com/olekukonko/tablewriter"
 )
 
@@ -23,6 +23,7 @@ type Copy struct {
 	BYTESTotal      int64  `db:"bytes_total"`
 	TUPLESProcessed int64  `db:"tuples_processed"`
 	TUPLESExcluded  int64  `db:"tuples_excluded"`
+	TUPLESSkipped   int64  `db:"tuples_skipped"`
 }
 
 var (
@@ -68,31 +69,17 @@ func (v Copy) Pid() int {
 	return v.PID
 }
 
-func (v Copy) Color() (string, string) {
-	return "#5AF6FF", "#7CFFCB"
+func (v Copy) Color() (color.Color, color.Color) {
+	return color.RGBA{R: 90, G: 246, B: 255}, color.RGBA{R: 124, G: 255, B: 203}
 }
 
 func (v Copy) Table() string {
 	value := str.ToStrStruct(v)
 	buff := new(bytes.Buffer)
 	t := tablewriter.NewWriter(buff)
-	t.SetHeader(CopyColumns[0:7])
-	t.Append(value[0:7])
+	t.Header(CopyColumns)
+	t.Append(value)
 	t.Render()
-
-	t2 := tablewriter.NewWriter(buff)
-	t2.SetHeader(CopyColumns[7:])
-	t2.Append(value[7:])
-	t2.Render()
-	return buff.String()
-}
-
-func (v Copy) Vertical() string {
-	buff := new(bytes.Buffer)
-	vt := vertical.NewWriter(buff)
-	vt.SetHeader(CopyColumns)
-	vt.AppendStruct(v)
-	vt.Render()
 	return buff.String()
 }
 

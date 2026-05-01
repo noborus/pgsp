@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 	_ "github.com/lib/pq"
 
 	"github.com/noborus/pgsp"
@@ -76,12 +76,12 @@ func Progress(targets []string) {
 	}()
 
 	monitor.Targets(targets)
-	model := tui.NewModel(monitor)
+	model := tui.NewModel(monitor, config.FullScreen)
 
-	p := tui.NewProgram(model, config.FullScreen)
+	p := tui.NewProgram(model)
 	tui.DebugLog("Start")
 	defer tui.DebugLog("End")
-	if err := p.Start(); err != nil {
+	if _, err := p.Run(); err != nil {
 		fmt.Printf("there's been an error: %v", err)
 		return
 	}
