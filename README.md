@@ -1,5 +1,9 @@
 # pgsp - PostgreSQL Stat Progress CLI Monitor
 
+> **⚠️ This repository is archived.**
+> Development has been taken over by [EraYaN/pgsp](https://github.com/EraYaN/pgsp).
+> Please use the new repository for the latest updates and support.
+
 [![Go Reference](https://pkg.go.dev/badge/github.com/noborus/pgsp.svg)](https://pkg.go.dev/github.com/noborus/pgsp)
 
 A CUI tool that monitors PostgreSQL's pg_stat_progress*.
